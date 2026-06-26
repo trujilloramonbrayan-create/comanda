@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comanda</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══════════════════════════════════════
+       SIDEBAR
+  ══════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark"></div>
+      <span class="logo-text">Comanda</span>
+    </div>
+
+    <nav class="nav">
+      <span class="nav-section">Gestión</span>
+
+      <a href="#" class="nav-item activo" data-vista="restaurantes">
+        Restaurantes
+      </a>
+      <a href="#" class="nav-item" data-vista="mesas">
+        Mesas
+      </a>
+      <a href="#" class="nav-item" data-vista="pedidos">
+        Pedidos
+      </a>
+
+      <span class="nav-section">Catálogo</span>
+
+      <a href="#" class="nav-item" data-vista="menu">
+        Menú / Productos
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ═══════════════════════════════════════
+       ÁREA PRINCIPAL
+  ══════════════════════════════════════════ -->
+  <main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <h1 class="page-title" id="titulo-pagina">Restaurantes</h1>
+      <button class="btn btn-primary" id="btn-nuevo">+ Nuevo restaurante</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ──────────────────────────────────
+           VISTA: Restaurantes
+      ─────────────────────────────────── -->
+      <div id="vista-restaurantes">
+
+        <!-- Tarjeta estadística -->
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-label">Total restaurantes</div>
+            <div class="stat-value" id="stat-total">3</div>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Listado</span>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Slug</th>
+                <th>Creado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body">
+              <!-- filas de ejemplo — se reemplazarán con datos reales al conectar el backend -->
+              <tr>
+                <td><span class="cell-id">#1</span></td>
+                <td><span class="cell-nombre">La Trattoria</span></td>
+                <td><span class="cell-slug">la-trattoria</span></td>
+                <td><span class="cell-fecha">15 jun 2026</span></td>
+                <td>
+                  <div class="cell-acciones">
+                    <button class="btn btn-ghost">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="cell-id">#2</span></td>
+                <td><span class="cell-nombre">El Parrillón</span></td>
+                <td><span class="cell-slug">el-parrillon</span></td>
+                <td><span class="cell-fecha">18 jun 2026</span></td>
+                <td>
+                  <div class="cell-acciones">
+                    <button class="btn btn-ghost">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="cell-id">#3</span></td>
+                <td><span class="cell-nombre">Sushi Zen</span></td>
+                <td><span class="cell-slug">sushi-zen</span></td>
+                <td><span class="cell-fecha">22 jun 2026</span></td>
+                <td>
+                  <div class="cell-acciones">
+                    <button class="btn btn-ghost">Editar</button>
+                    <button class="btn btn-danger">Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /vista-restaurantes -->
+
+      <!-- ──────────────────────────────────
+           VISTAS PENDIENTES
+      ─────────────────────────────────── -->
+      <div id="vista-mesas"   class="oculto placeholder-view">Mesas — próximamente</div>
+      <div id="vista-pedidos" class="oculto placeholder-view">Pedidos — próximamente</div>
+      <div id="vista-menu"    class="oculto placeholder-view">Menú / Productos — próximamente</div>
+
+    </div><!-- /content -->
+  </main><!-- /main -->
+
+</div><!-- /layout -->
+
+<!-- ═══════════════════════════════════════
+     MODAL — Nuevo / Editar restaurante
+══════════════════════════════════════════ -->
+<div class="modal-overlay oculto" id="modal-restaurante">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-titulo">Nuevo restaurante</h2>
+      <button class="modal-close" id="btn-cerrar">&#x2715;</button>
+    </div>
+
+    <form id="form-restaurante">
+      <div class="modal-body">
+        <div class="campo">
+          <label for="campo-nombre">Nombre</label>
+          <input
+            type="text"
+            id="campo-nombre"
+            name="nombre"
+            placeholder="El Buen Gusto"
+            autocomplete="off"
+            required
+          />
+        </div>
+        <div class="campo">
+          <label for="campo-slug">Slug</label>
+          <input
+            type="text"
+            id="campo-slug"
+            name="slug"
+            placeholder="el-buen-gusto"
+            autocomplete="off"
+            required
+          />
+          <p class="hint">Se usa en URLs. Solo letras, números y guiones.</p>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btn-cancelar">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

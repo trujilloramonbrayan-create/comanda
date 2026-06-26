@@ -1,0 +1,22 @@
+{
+  "name": "comanda",
+  "version": "1.0.0",
+  "description": "API multitenant para gestión de comandas de restaurantes",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "dev": "node --watch --experimental-strip-types src/server.ts"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.6",
+    "typescript": "^5.5.0"
+  }
+}
