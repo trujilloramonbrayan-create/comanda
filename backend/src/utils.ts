@@ -7,19 +7,41 @@ export function responderJSON(res: ServerResponse, status: number, data: unknown
   res.end(JSON.stringify(data));
 }
 
+const LIMITE_CUERPO = 100 * 1024; // 100 KB — previene DoS por payloads gigantes
+
 // Lee el body del request y lo parsea como JSON.
-// Rechaza si el body no es JSON válido.
+// Rechaza con { status: 413 } si supera el límite, o si el cuerpo no es JSON válido.
 export function leerCuerpo<T>(req: IncomingMessage): Promise<T> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    let tamaño = 0;
+    let terminado = false;
+
+    req.on('data', (chunk: Buffer) => {
+      if (terminado) return;
+      tamaño += chunk.length;
+      if (tamaño > LIMITE_CUERPO) {
+        terminado = true;
+        reject(Object.assign(new Error('El cuerpo de la petición supera el límite de 100 KB'), { status: 413 }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
+      if (terminado) return;
+      terminado = true;
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')) as T);
       } catch {
         reject(new Error('JSON inválido'));
       }
     });
-    req.on('error', reject);
+    req.on('error', (err) => {
+      if (!terminado) {
+        terminado = true;
+        reject(err);
+      }
+    });
   });
 }

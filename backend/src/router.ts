@@ -46,9 +46,20 @@ export async function despachar(req: IncomingMessage, res: ServerResponse) {
 
     // Mapea cada grupo capturado al nombre de parámetro correspondiente
     const params: Record<string, string> = {};
+    let paramsValidos = true;
     entrada.llaves.forEach((llave, i) => {
-      params[llave] = decodeURIComponent(coincidencia[i + 1]);
+      try {
+        params[llave] = decodeURIComponent(coincidencia[i + 1]);
+      } catch {
+        paramsValidos = false;
+      }
     });
+
+    if (!paramsValidos) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Parámetro de URL inválido' }));
+      return;
+    }
 
     await entrada.manejador(req, res, params);
     return;

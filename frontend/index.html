@@ -3,8 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Comanda</title>
+  <meta name="description" content="Panel de administración de comanda — gestión del menú y pedidos de tu restaurante." />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Panel — Comanda</title>
   <link rel="stylesheet" href="css/styles.css" />
+  <!-- Guard: redirige a login si no hay token antes de renderizar nada -->
+  <script>
+    if (!localStorage.getItem('comanda_token')) {
+      window.location.replace('login.html');
+    }
+  </script>
 </head>
 <body>
 
@@ -19,25 +27,30 @@
       <span class="logo-text">Comanda</span>
     </div>
 
-    <nav class="nav">
-      <span class="nav-section">Gestión</span>
+    <!-- Nombre del restaurante del dueño logueado, cargado por JS -->
+    <div class="sidebar-restaurante" id="sidebar-restaurante-nombre">…</div>
 
-      <a href="#" class="nav-item activo" data-vista="restaurantes">
-        Restaurantes
+    <nav class="nav">
+      <span class="nav-section">Catálogo</span>
+
+      <a href="#" class="nav-item activo" data-vista="menu">
+        Menú
+      </a>
+      <a href="#" class="nav-item" data-vista="qr">
+        Mi QR
+      </a>
+
+      <span class="nav-section">Operación</span>
+
+      <a href="#" class="nav-item" data-vista="pedidos">
+        Pedidos
       </a>
       <a href="#" class="nav-item" data-vista="mesas">
         Mesas
       </a>
-      <a href="#" class="nav-item" data-vista="pedidos">
-        Pedidos
-      </a>
-
-      <span class="nav-section">Catálogo</span>
-
-      <a href="#" class="nav-item" data-vista="menu">
-        Menú / Productos
-      </a>
     </nav>
+
+    <button class="btn-cerrar-sesion" id="btn-cerrar-sesion">Cerrar sesión</button>
   </aside>
 
   <!-- ═══════════════════════════════════════
@@ -47,91 +60,53 @@
 
     <!-- Topbar -->
     <div class="topbar">
-      <h1 class="page-title" id="titulo-pagina">Restaurantes</h1>
-      <button class="btn btn-primary" id="btn-nuevo">+ Nuevo restaurante</button>
+      <h1 class="page-title" id="titulo-pagina">Menú</h1>
+      <!-- Solo visible en la vista Menú -->
+      <button class="btn btn-primary" id="btn-nuevo">+ Nueva categoría</button>
     </div>
 
     <div class="content">
 
       <!-- ──────────────────────────────────
-           VISTA: Restaurantes
+           VISTA: Menú / Productos (principal)
       ─────────────────────────────────── -->
-      <div id="vista-restaurantes">
+      <div id="vista-menu">
+        <!-- Categorías — renderizadas por JS -->
+        <div id="lista-categorias"></div>
+      </div>
 
-        <!-- Tarjeta estadística -->
-        <div class="stats">
-          <div class="stat-card">
-            <div class="stat-label">Total restaurantes</div>
-            <div class="stat-value" id="stat-total">3</div>
+      <!-- ──────────────────────────────────
+           VISTA: QR del menú
+      ─────────────────────────────────── -->
+      <div id="vista-qr" class="oculto">
+        <div class="qr-card">
+          <div class="qr-imagen-wrap">
+            <img id="qr-imagen" class="qr-imagen" src="" alt="Código QR del menú" />
+          </div>
+          <div class="qr-info">
+            <h2>Tu código QR</h2>
+            <p>
+              Imprimilo y pegalo en cada mesa. Tus clientes lo escanean con la
+              cámara del celular y ven el menú al instante — sin app, sin descarga.
+            </p>
+            <div class="qr-url-bloque">
+              <span class="qr-url-label">URL del menú</span>
+              <code class="qr-url-texto" id="qr-url-texto">—</code>
+            </div>
+            <div class="qr-acciones">
+              <a id="qr-descargar" href="#" class="btn btn-primary" download="mi-qr-menu.png">
+                ↓ Descargar PNG
+              </a>
+            </div>
           </div>
         </div>
-
-        <!-- Tabla -->
-        <div class="table-card">
-          <div class="table-header">
-            <span class="table-title">Listado</span>
-          </div>
-
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Slug</th>
-                <th>Creado</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tabla-body">
-              <!-- filas de ejemplo — se reemplazarán con datos reales al conectar el backend -->
-              <tr>
-                <td><span class="cell-id">#1</span></td>
-                <td><span class="cell-nombre">La Trattoria</span></td>
-                <td><span class="cell-slug">la-trattoria</span></td>
-                <td><span class="cell-fecha">15 jun 2026</span></td>
-                <td>
-                  <div class="cell-acciones">
-                    <button class="btn btn-ghost">Editar</button>
-                    <button class="btn btn-danger">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td><span class="cell-id">#2</span></td>
-                <td><span class="cell-nombre">El Parrillón</span></td>
-                <td><span class="cell-slug">el-parrillon</span></td>
-                <td><span class="cell-fecha">18 jun 2026</span></td>
-                <td>
-                  <div class="cell-acciones">
-                    <button class="btn btn-ghost">Editar</button>
-                    <button class="btn btn-danger">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td><span class="cell-id">#3</span></td>
-                <td><span class="cell-nombre">Sushi Zen</span></td>
-                <td><span class="cell-slug">sushi-zen</span></td>
-                <td><span class="cell-fecha">22 jun 2026</span></td>
-                <td>
-                  <div class="cell-acciones">
-                    <button class="btn btn-ghost">Editar</button>
-                    <button class="btn btn-danger">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div><!-- /vista-restaurantes -->
+      </div>
 
       <!-- ──────────────────────────────────
            VISTAS PENDIENTES
       ─────────────────────────────────── -->
-      <div id="vista-mesas"   class="oculto placeholder-view">Mesas — próximamente</div>
       <div id="vista-pedidos" class="oculto placeholder-view">Pedidos — próximamente</div>
-      <div id="vista-menu"    class="oculto placeholder-view">Menú / Productos — próximamente</div>
+      <div id="vista-mesas"   class="oculto placeholder-view">Mesas — próximamente</div>
 
     </div><!-- /content -->
   </main><!-- /main -->
@@ -139,44 +114,99 @@
 </div><!-- /layout -->
 
 <!-- ═══════════════════════════════════════
-     MODAL — Nuevo / Editar restaurante
+     MODAL — Nueva / Editar categoría
 ══════════════════════════════════════════ -->
-<div class="modal-overlay oculto" id="modal-restaurante">
+<div class="modal-overlay oculto" id="modal-categoria">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="modal-titulo">Nuevo restaurante</h2>
-      <button class="modal-close" id="btn-cerrar">&#x2715;</button>
+      <h2 id="modal-cat-titulo">Nueva categoría</h2>
+      <button class="modal-close" id="btn-cerrar-cat">&#x2715;</button>
     </div>
-
-    <form id="form-restaurante">
+    <form id="form-categoria">
       <div class="modal-body">
         <div class="campo">
-          <label for="campo-nombre">Nombre</label>
+          <label for="campo-cat-nombre">Nombre</label>
           <input
             type="text"
-            id="campo-nombre"
+            id="campo-cat-nombre"
             name="nombre"
-            placeholder="El Buen Gusto"
+            placeholder="Ej: Entradas, Pastas, Postres"
+            autocomplete="off"
+            required
+          />
+        </div>
+        <p class="hint campo-error oculto" id="modal-cat-error"></p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btn-cancelar-cat">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL — Nuevo / Editar plato
+══════════════════════════════════════════ -->
+<div class="modal-overlay oculto" id="modal-plato">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-plato-titulo">Nuevo plato</h2>
+      <button class="modal-close" id="btn-cerrar-plato">&#x2715;</button>
+    </div>
+    <form id="form-plato">
+      <div class="modal-body">
+
+        <!-- Foto placeholder — aquí irá el input de imagen real -->
+        <div class="foto-upload-area">
+          <div class="plato-foto-preview" id="plato-foto-preview"></div>
+          <span class="foto-upload-label">Subir foto &middot; próximamente</span>
+        </div>
+
+        <div class="campo">
+          <label for="campo-plato-nombre">Nombre</label>
+          <input
+            type="text"
+            id="campo-plato-nombre"
+            name="nombre"
+            placeholder="Ej: Bruschetta al pomodoro"
             autocomplete="off"
             required
           />
         </div>
         <div class="campo">
-          <label for="campo-slug">Slug</label>
+          <label for="campo-plato-desc">Descripción</label>
+          <textarea
+            id="campo-plato-desc"
+            name="descripcion"
+            placeholder="Ingredientes y preparación..."
+            rows="2"
+          ></textarea>
+        </div>
+        <div class="campo">
+          <label for="campo-plato-precio">Precio</label>
           <input
-            type="text"
-            id="campo-slug"
-            name="slug"
-            placeholder="el-buen-gusto"
-            autocomplete="off"
+            type="number"
+            id="campo-plato-precio"
+            name="precio"
+            placeholder="12000"
+            min="0"
+            step="500"
             required
           />
-          <p class="hint">Se usa en URLs. Solo letras, números y guiones.</p>
+          <p class="hint">En pesos colombianos, sin puntos. Ej: 12000</p>
         </div>
-      </div>
+        <div class="campo">
+          <label class="campo-toggle">
+            <input type="checkbox" id="campo-plato-disp" name="disponible" checked />
+            <span>Disponible</span>
+          </label>
+        </div>
+        <p class="hint campo-error oculto" id="modal-plato-error"></p>
 
+      </div>
       <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" id="btn-cancelar">Cancelar</button>
+        <button type="button" class="btn btn-secondary" id="btn-cancelar-plato">Cancelar</button>
         <button type="submit" class="btn btn-primary">Guardar</button>
       </div>
     </form>
