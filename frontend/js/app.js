@@ -601,10 +601,26 @@ function formatearCOP(n) {
 }
 
 function formatearFechaCorta(fechaStr) {
-  // fechaStr viene como "2026-06-29" desde el backend (DATE en UTC)
+  // fechaStr viene como "2026-06-29" desde el backend (DATE)
+  // Construimos con año/mes/día para evitar desfase de zona horaria
   const [anio, mes, dia] = fechaStr.split('-').map(Number);
   const d = new Date(anio, mes - 1, dia);
-  return d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+  const hoy   = new Date();
+  const ayer  = new Date(hoy); ayer.setDate(hoy.getDate() - 1);
+
+  const mismaFecha = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth()    === b.getMonth()    &&
+    a.getDate()     === b.getDate();
+
+  if (mismaFecha(d, hoy))  return 'Hoy';
+  if (mismaFecha(d, ayer)) return 'Ayer';
+
+  return d.toLocaleDateString('es-CO', {
+    weekday: 'long',
+    day:     'numeric',
+    month:   'long',
+  });
 }
 
 async function cargarGanancias() {
@@ -623,8 +639,8 @@ function renderizarGanancias({ hoy, mes, por_dia }) {
 
   const filaDias = por_dia.map(d => `
     <tr class="ganancia-fila">
-      <td>${escaparHTML(formatearFechaCorta(d.fecha))}</td>
-      <td class="ganancia-td-num">${d.pedidos}</td>
+      <td class="ganancia-td-fecha">${escaparHTML(formatearFechaCorta(d.fecha))}</td>
+      <td class="ganancia-td-num">${d.pedidos} pedido${d.pedidos !== 1 ? 's' : ''}</td>
       <td class="ganancia-td-monto">${formatearCOP(d.total)}</td>
     </tr>`).join('');
 
