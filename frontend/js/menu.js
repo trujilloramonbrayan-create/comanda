@@ -405,18 +405,27 @@ function renderizarMenu(datos) {
 function iniciarScrollBehavior() {
   const secciones = Array.from(document.querySelectorAll('.categoria'));
   const tabs = Array.from(document.querySelectorAll('.cat-tab'));
+  const navScroll = document.getElementById('contenedor-tabs');
   const OFFSET_TOP = 60;
 
+  // Centra el tab activo en el nav horizontal SIN tocar el scroll de la página.
+  // scrollIntoView() puede mover la página entera aunque el nav sea sticky — por eso
+  // se desplaza directamente el contenedor del nav con scrollTo.
   function activarTab(id) {
     tabs.forEach(t => t.classList.toggle('activo', t.dataset.cat === id));
     const tabActivo = tabs.find(t => t.dataset.cat === id);
-    if (tabActivo) {
-      tabActivo.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
+    if (!tabActivo) return;
+    const left = tabActivo.offsetLeft - (navScroll.offsetWidth - tabActivo.offsetWidth) / 2;
+    navScroll.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
   }
+
+  // Mientras dura el scroll de un clic en tab, ignoramos el observer para que no
+  // haya un ciclo que haga saltar la página.
+  let bloqueadoPorClic = false;
 
   const observer = new IntersectionObserver(
     entries => {
+      if (bloqueadoPorClic) return;
       entries.forEach(entry => {
         if (entry.isIntersecting) activarTab(entry.target.id);
       });
@@ -429,11 +438,15 @@ function iniciarScrollBehavior() {
   tabs.forEach(tab => {
     tab.addEventListener('click', e => {
       e.preventDefault();
+      bloqueadoPorClic = true;
+      activarTab(tab.dataset.cat);
       const seccion = document.getElementById(tab.dataset.cat);
       if (!seccion) return;
       const navAlto = document.getElementById('nav-cat').offsetHeight;
       const y = seccion.getBoundingClientRect().top + window.scrollY - navAlto - 8;
       window.scrollTo({ top: y, behavior: 'smooth' });
+      // Desbloquear después de que termina la animación de scroll (~600ms)
+      setTimeout(() => { bloqueadoPorClic = false; }, 700);
     });
   });
 }
