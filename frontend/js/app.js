@@ -132,22 +132,27 @@ function cambiarVista(nombre) {
   const titulos = {
     menu:      'Menú',
     qr:        'Mi QR',
+    mesas:     'Mesas',
     pedidos:   'Pedidos',
     ganancias: 'Ganancias',
   };
   document.getElementById('titulo-pagina').textContent = titulos[nombre] ?? nombre;
 
-  // btn-nuevo solo aparece en la vista de menú
+  // btn-nuevo visible en menú y mesas
   const btnNuevo = document.getElementById('btn-nuevo');
   if (nombre === 'menu') {
     btnNuevo.classList.remove('oculto');
     btnNuevo.textContent = '+ Nueva categoría';
+  } else if (nombre === 'mesas') {
+    btnNuevo.classList.remove('oculto');
+    btnNuevo.textContent = '+ Nueva mesa';
   } else {
     btnNuevo.classList.add('oculto');
   }
 
   if (nombre === 'menu')      cargarMenu();
   if (nombre === 'qr')        cargarQR();
+  if (nombre === 'mesas')     cargarMesas();
   if (nombre === 'ganancias') cargarGanancias();
   if (nombre === 'pedidos')   { cargarPedidos(); iniciarAutoRefreshPedidos(); }
   if (nombre !== 'pedidos')   detenerAutoRefreshPedidos();
@@ -589,6 +594,7 @@ function inicializarEditorMenu() {
     if (e.key !== 'Escape') return;
     cerrarModalCategoria();
     cerrarModalPlato();
+    cerrarModalMesa();
   });
 }
 
@@ -838,6 +844,128 @@ function inicializarEditorPedidos() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Módulo de Mesas
+// ─────────────────────────────────────────────────────────────
+
+const estadoMesas = { lista: [] };
+
+async function cargarMesas() {
+  const contenedor = document.getElementById('mesas-contenido');
+  contenedor.innerHTML = '<div class="cargando-vista">Cargando mesas…</div>';
+  try {
+    estadoMesas.lista = await llamarAPI('/mesas');
+    renderizarMesas();
+  } catch (err) {
+    contenedor.innerHTML = `<div class="error-menu">Error: ${escaparHTML(err.message)}</div>`;
+  }
+}
+
+function renderizarMesas() {
+  const contenedor = document.getElementById('mesas-contenido');
+
+  if (estadoMesas.lista.length === 0) {
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon"></div>
+        <h3>Sin mesas</h3>
+        <p>Creá las mesas de tu restaurante para que tus clientes puedan pedir desde el QR.</p>
+      </div>`;
+    return;
+  }
+
+  const cards = estadoMesas.lista.map(m => `
+    <div class="mesa-card${m.activa ? '' : ' inactiva'}" data-mesa-id="${m.id}">
+      <span class="mesa-numero">${escaparHTML(String(m.numero))}</span>
+      <span class="mesa-badge ${m.activa ? 'activa' : 'inactiva'}">${m.activa ? 'Activa' : 'Inactiva'}</span>
+      <div class="mesa-acciones">
+        <button class="btn btn-ghost btn-toggle-mesa" type="button" title="${m.activa ? 'Desactivar' : 'Activar'}">
+          ${m.activa ? 'Pausar' : 'Activar'}
+        </button>
+        <button class="btn btn-danger btn-eliminar-mesa" type="button" title="Eliminar">✕</button>
+      </div>
+    </div>`).join('');
+
+  contenedor.innerHTML = `<div class="mesas-grid">${cards}</div>`;
+}
+
+async function toggleMesa(id) {
+  try {
+    const actualizada = await llamarAPI(`/mesas/${id}`, { method: 'PATCH' });
+    const idx = estadoMesas.lista.findIndex(m => m.id == id);
+    if (idx !== -1) estadoMesas.lista[idx] = { ...estadoMesas.lista[idx], activa: actualizada.activa };
+    renderizarMesas();
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+}
+
+async function eliminarMesa(id) {
+  const mesa = estadoMesas.lista.find(m => m.id == id);
+  if (!mesa || !confirm(`¿Eliminar la mesa ${mesa.numero}?`)) return;
+  try {
+    await llamarAPI(`/mesas/${id}`, { method: 'DELETE' });
+    estadoMesas.lista = estadoMesas.lista.filter(m => m.id != id);
+    renderizarMesas();
+  } catch (err) {
+    alert(`Error al eliminar: ${err.message}`);
+  }
+}
+
+function abrirModalMesa() {
+  document.getElementById('form-mesa').reset();
+  document.getElementById('modal-mesa-error').classList.add('oculto');
+  document.getElementById('modal-mesa').classList.remove('oculto');
+  document.getElementById('campo-mesa-numero').focus();
+}
+
+function cerrarModalMesa() {
+  document.getElementById('modal-mesa').classList.add('oculto');
+}
+
+function inicializarEditorMesas() {
+  // Delegación sobre la grilla
+  document.getElementById('mesas-contenido').addEventListener('click', e => {
+    const card = e.target.closest('.mesa-card');
+    if (!card) return;
+    if (e.target.closest('.btn-toggle-mesa'))   toggleMesa(card.dataset.mesaId);
+    if (e.target.closest('.btn-eliminar-mesa')) eliminarMesa(card.dataset.mesaId);
+  });
+
+  // Modal
+  document.getElementById('btn-cerrar-mesa').addEventListener('click', cerrarModalMesa);
+  document.getElementById('btn-cancelar-mesa').addEventListener('click', cerrarModalMesa);
+  document.getElementById('modal-mesa').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-mesa')) cerrarModalMesa();
+  });
+
+  document.getElementById('form-mesa').addEventListener('submit', async e => {
+    e.preventDefault();
+    const numero = parseInt(document.getElementById('campo-mesa-numero').value, 10);
+    if (!Number.isInteger(numero) || numero < 1 || numero > 9999) return;
+
+    const btn = e.target.querySelector('[type="submit"]');
+    btn.disabled = true;
+
+    try {
+      const nueva = await llamarAPI('/mesas', {
+        method: 'POST',
+        body: JSON.stringify({ numero }),
+      });
+      estadoMesas.lista.push(nueva);
+      estadoMesas.lista.sort((a, b) => a.numero - b.numero);
+      renderizarMesas();
+      cerrarModalMesa();
+    } catch (err) {
+      const el = document.getElementById('modal-mesa-error');
+      el.textContent = err.message;
+      el.classList.remove('oculto');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // Inicialización principal
 // ─────────────────────────────────────────────────────────────
 
@@ -850,11 +978,13 @@ function init() {
   });
 
   document.getElementById('btn-nuevo').addEventListener('click', () => {
-    if (estado.vistaActual === 'menu') abrirModalCategoria('crear');
+    if (estado.vistaActual === 'menu')  abrirModalCategoria('crear');
+    if (estado.vistaActual === 'mesas') abrirModalMesa();
   });
 
   inicializarEditorMenu();
   inicializarEditorPedidos();
+  inicializarEditorMesas();
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();
