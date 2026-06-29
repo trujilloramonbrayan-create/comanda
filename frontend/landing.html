@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Menú digital con código QR para tu restaurante. Pedidos en línea y pago con Mercado Pago. Sin comisión por venta — solo $50.000/mes.">
+  <title>clik — Menú digital con QR para tu restaurante</title>
+
+  <!-- Fuentes: Sora (display) + Inter (cuerpo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <nav class="nav">
+      <span class="logo">clik</span>
+      <div class="nav-acciones">
+        <a href="login.html" class="btn btn-secundario">Iniciar sesión</a>
+        <a href="register.html" class="btn btn-primario">Probar gratis</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-interior">
+
+      <div class="hero-copy">
+        <!-- Badge de localidad -->
+        <div class="hero-badge">
+          <span class="hero-badge-punto"></span>
+          Hecho en Neiva, Huila · Colombia
+        </div>
+
+        <h1 class="hero-titulo">
+          Tu menú digital.<br>
+          <em>Tus ganancias completas.</em>
+        </h1>
+        <p class="hero-subtitulo">
+          Menú con código QR, pedidos en línea y cobro con Mercado Pago.
+          Sin comisión por venta — pagás una cuota fija mensual
+          y la plata es toda tuya.
+        </p>
+        <a href="register.html" class="hero-cta">
+          Probar gratis — el primer mes sin costo
+        </a>
+      </div>
+
+      <!-- Mockup del celular con menú simulado -->
+      <div class="mockup-contenedor">
+        <div class="telefono-ext">
+          <div class="telefono">
+            <div class="telefono-notch"></div>
+            <div class="telefono-pantalla">
+              <div class="menu-mockup-header">
+                La Leña — Asados
+                <small>Mesa 4 · Escaneá para pedir</small>
+              </div>
+              <div class="menu-mockup-categoria">Platos fuertes</div>
+              <div class="menu-mockup-item">
+                <div class="foto-plato foto-plato-bandeja"></div>
+                <div class="menu-mockup-item-info">
+                  <div class="menu-mockup-item-nombre">Bandeja paisa</div>
+                  <div class="menu-mockup-item-desc">Frijoles, chicharrón, carne</div>
+                </div>
+                <div class="menu-mockup-item-precio">$28.000</div>
+              </div>
+              <div class="menu-mockup-item">
+                <div class="foto-plato foto-plato-carne"></div>
+                <div class="menu-mockup-item-info">
+                  <div class="menu-mockup-item-nombre">Carne asada</div>
+                  <div class="menu-mockup-item-desc">250g, papas y ensalada</div>
+                </div>
+                <div class="menu-mockup-item-precio">$35.000</div>
+              </div>
+              <div class="menu-mockup-item">
+                <div class="foto-plato foto-plato-pollo"></div>
+                <div class="menu-mockup-item-info">
+                  <div class="menu-mockup-item-nombre">Pollo a la plancha</div>
+                  <div class="menu-mockup-item-desc">Arroz y patacones</div>
+                </div>
+                <div class="menu-mockup-item-precio">$22.000</div>
+              </div>
+              <div class="menu-mockup-categoria">Bebidas</div>
+              <div class="menu-mockup-item">
+                <div class="foto-plato foto-plato-limonada"></div>
+                <div class="menu-mockup-item-info">
+                  <div class="menu-mockup-item-nombre">Limonada de coco</div>
+                  <div class="menu-mockup-item-desc">500ml</div>
+                </div>
+                <div class="menu-mockup-item-precio">$8.000</div>
+              </div>
+              <div class="menu-mockup-btn">Pedir ahora</div>
+              <div class="menu-mockup-home"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== BARRA DE LOGOS ===== -->
+  <!-- REEMPLAZAR con logos y nombres reales de restaurantes clientes -->
+  <div class="logos-barra">
+    <p class="logos-eyebrow">Restaurantes que ya confían en clik</p>
+    <div class="logos-grid">
+      <span class="logo-rest logo-rest-1">El Fogón Llanero</span>
+      <span class="logo-rest logo-rest-2">Pizza 1879</span>
+      <span class="logo-rest logo-rest-3">Ceviches del Pacífico</span>
+      <span class="logo-rest logo-rest-4">La Leña & Brasa</span>
+      <span class="logo-rest logo-rest-5">Donde Mamá</span>
+      <span class="logo-rest logo-rest-6">Sabor Opita</span>
+    </div>
+  </div>
+
+  <!-- ===== FEATURES — ¿Qué incluye? ===== -->
+  <section class="features" id="que-incluye">
+    <div class="contenedor">
+      <h2 class="seccion-titulo animar">¿Qué incluye clik?</h2>
+      <p class="seccion-subtitulo animar" style="--delay:80ms">Todo lo que necesitás para digitalizar tu restaurante, listo desde el primer día.</p>
+
+      <div class="features-grid">
+
+        <div class="feature-card animar" style="--delay:100ms">
+          <div class="feature-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/>
+              <path d="M14 14h2v2h-2zm4 0h2v2h-2zm-4 4h2v2h-2zm2-2h2v2h-2v-2z" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+          <h3 class="feature-titulo">Menú digital con QR</h3>
+          <p class="feature-desc">clik genera tu código QR automáticamente. Lo imprimís, lo ponés en la mesa y tus clientes acceden al menú desde el celular.</p>
+        </div>
+
+        <div class="feature-card animar" style="--delay:180ms">
+          <div class="feature-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <h3 class="feature-titulo">Pedidos en línea</h3>
+          <p class="feature-desc">Tus clientes eligen sus platos y hacen el pedido desde el celular, sin necesidad de esperar al mesero.</p>
+        </div>
+
+        <div class="feature-card animar" style="--delay:260ms">
+          <div class="feature-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+              <line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <h3 class="feature-titulo">Pago con Mercado Pago</h3>
+          <p class="feature-desc">Conectás tu propia cuenta de Mercado Pago y la plata entra directo a vos. clik no toca tu dinero.</p>
+        </div>
+
+        <div class="feature-card animar" style="--delay:340ms">
+          <div class="feature-icono">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </div>
+          <h3 class="feature-titulo">Editá tu menú vos mismo</h3>
+          <p class="feature-desc">Desde tu panel cambiás precios, agregás platos y ocultás lo que se acabó. Sin llamar a nadie, en segundos.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MÉTRICAS ===== -->
+  <!-- REEMPLAZAR con datos reales cuando estén disponibles -->
+  <section class="metricas">
+    <div class="contenedor">
+      <div class="metricas-grid">
+        <div class="metrica animar">
+          <div class="metrica-numero">+<span class="contador" data-target="50">50</span></div>
+          <p class="metrica-etiqueta">restaurantes activos</p>
+        </div>
+        <div class="metrica animar" style="--delay:100ms">
+          <div class="metrica-numero">+<span class="contador" data-target="10000">10.000</span></div>
+          <p class="metrica-etiqueta">pedidos procesados</p>
+        </div>
+        <div class="metrica animar" style="--delay:200ms">
+          <div class="metrica-numero">0%</div>
+          <p class="metrica-etiqueta">de comisión por venta</p>
+        </div>
+        <div class="metrica animar" style="--delay:300ms">
+          <div class="metrica-numero">$0</div>
+          <p class="metrica-etiqueta">en instalación o setup</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CÓMO FUNCIONA ===== -->
+  <section class="como-funciona" id="como-funciona">
+    <div class="contenedor">
+      <h2 class="seccion-titulo animar">Tres pasos y estás listo</h2>
+      <p class="seccion-subtitulo animar" style="--delay:80ms">Sin técnicos, sin instalaciones, sin papeleo.</p>
+
+      <div class="pasos">
+        <div class="paso animar" style="--delay:100ms">
+          <div class="paso-numero">1</div>
+          <div class="paso-contenido">
+            <h3>Te registrás solo</h3>
+            <p>Creás tu cuenta en minutos. Ingresás los datos de tu restaurante y empezás el mes gratis sin necesidad de tarjeta de crédito.</p>
+          </div>
+        </div>
+
+        <div class="paso-separador" aria-hidden="true"></div>
+
+        <div class="paso animar" style="--delay:220ms">
+          <div class="paso-numero">2</div>
+          <div class="paso-contenido">
+            <h3>Cargás tu menú</h3>
+            <p>Desde tu panel agregás categorías y platos. clik genera tu código QR automáticamente — listo para imprimir y poner en cada mesa.</p>
+          </div>
+        </div>
+
+        <div class="paso-separador" aria-hidden="true"></div>
+
+        <div class="paso animar" style="--delay:340ms">
+          <div class="paso-numero">3</div>
+          <div class="paso-contenido">
+            <h3>Tus clientes escanean y piden</h3>
+            <p>Apuntan la cámara al QR, ven tu menú, piden y pagan desde el celular. Vos ves los pedidos en tiempo real en tu panel.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DIFERENCIAL ===== -->
+  <section class="diferencial">
+    <div class="contenedor">
+      <p class="diferencial-eyebrow animar">La diferencia que importa</p>
+      <h2 class="diferencial-titulo animar" style="--delay:80ms">
+        Las apps de delivery se quedan<br>
+        con hasta el <span>30% de cada pedido.</span>
+      </h2>
+      <p class="diferencial-texto animar" style="--delay:160ms">
+        Rappi, iFood y similares cobran comisión por cada venta.
+        Si vendés $1.000.000 al mes, hasta $300.000 son para ellos,
+        no para vos.
+      </p>
+      <div class="diferencial-destaque animar" style="--delay:240ms">
+        <strong>En clik pagás $50.000 al mes y se acabó.</strong>
+        Sin importar cuánto vendas, la comisión es cero.
+        Tu ganancia es tuya, completa, siempre.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIOS ===== -->
+  <!-- REEMPLAZAR con testimonios reales de clientes -->
+  <section class="testimonios">
+    <div class="contenedor">
+      <h2 class="seccion-titulo animar">Lo que dicen nuestros clientes</h2>
+      <p class="seccion-subtitulo animar" style="--delay:80ms">Restaurantes reales, resultados reales.</p>
+
+      <div class="testimonios-grid">
+
+        <div class="testimonio animar" style="--delay:100ms">
+          <div class="testimonio-estrellas">★★★★★</div>
+          <p class="testimonio-cita">
+            "Antes perdía hasta el 28% con Rappi. Ahora con clik ese margen es mío.
+            La cuota me la cubro con la primera mesa del mediodía."
+          </p>
+          <div class="testimonio-autor">
+            <div class="testimonio-avatar" style="background: linear-gradient(135deg, #f97316, #dc2626)">MA</div>
+            <div>
+              <div class="testimonio-nombre">Mauricio Andrade</div>
+              <div class="testimonio-restaurante">El Fogón Llanero · Neiva</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonio animar" style="--delay:200ms">
+          <div class="testimonio-estrellas">★★★★★</div>
+          <p class="testimonio-cita">
+            "Lo armé sola una tarde, sin ayuda de nadie. El QR quedó listo y lo puse en las mesas.
+            Mis clientes se adaptaron rapidísimo."
+          </p>
+          <div class="testimonio-autor">
+            <div class="testimonio-avatar" style="background: linear-gradient(135deg, #8b5cf6, #ec4899)">SO</div>
+            <div>
+              <div class="testimonio-nombre">Sandra Milena Ospina</div>
+              <div class="testimonio-restaurante">Ceviches del Pacífico · Neiva</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonio animar" style="--delay:300ms">
+          <div class="testimonio-estrellas">★★★★★</div>
+          <p class="testimonio-cita">
+            "Lo que más me convenció fue no pagarle comisión a nadie. Vendo $4 millones al mes
+            y los $4 millones son míos. clik me cuesta $50 mil. Mejor inversión del negocio."
+          </p>
+          <div class="testimonio-autor">
+            <div class="testimonio-avatar" style="background: linear-gradient(135deg, #0ea5e9, #6366f1)">DH</div>
+            <div>
+              <div class="testimonio-nombre">Diego Hernández</div>
+              <div class="testimonio-restaurante">Pizza Artesanal 1879 · Neiva</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRECIO ===== -->
+  <section class="precio" id="precio">
+    <div class="contenedor">
+      <h2 class="seccion-titulo animar">Precio claro, sin sorpresas</h2>
+      <!-- REEMPLAZAR si el precio cambia -->
+      <p class="seccion-subtitulo animar" style="--delay:80ms">Una sola tarifa. Sin permanencia mínima. Cancelás cuando querés.</p>
+
+      <div class="precio-card animar" style="--delay:160ms">
+        <div class="precio-header">
+          <div class="precio-tag">Primer mes</div>
+          <div class="precio-gratis">Gratis</div>
+          <div class="precio-gratis-sub">Sin ingresar tarjeta de crédito</div>
+        </div>
+        <div class="precio-body">
+          <p class="precio-mensual">
+            Luego solo <strong>$50.000</strong> por mes
+          </p>
+          <ul class="precio-lista">
+            <li>Menú digital con código QR</li>
+            <li>Pedidos en línea ilimitados</li>
+            <li>Cobro con Mercado Pago</li>
+            <li>Panel para editar tu menú</li>
+            <li>Sin comisión por venta</li>
+            <li>Sin permanencia mínima</li>
+          </ul>
+          <a href="register.html" class="precio-cta">Empezar el mes gratis</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="faq" id="faq">
+    <div class="contenedor">
+      <h2 class="seccion-titulo animar">Preguntas frecuentes</h2>
+      <p class="seccion-subtitulo animar" style="--delay:80ms">Todo lo que necesitás saber antes de empezar.</p>
+
+      <div class="faq-lista">
+
+        <div class="faq-item animar" style="--delay:100ms">
+          <button class="faq-pregunta" aria-expanded="false">
+            ¿Necesito instalar algo en mi celular o computador?
+            <span class="faq-icono" aria-hidden="true"></span>
+          </button>
+          <div class="faq-respuesta">
+            <p>No. clik es 100% web. Vos entrás al panel desde cualquier navegador — Chrome, Safari, lo que uses. Tus clientes tampoco instalan nada: solo escanean el QR con la cámara del celular y ya ven el menú. Sin apps, sin descargas.</p>
+          </div>
+        </div>
+
+        <div class="faq-item animar" style="--delay:160ms">
+          <button class="faq-pregunta" aria-expanded="false">
+            ¿Cómo cobro a mis clientes?
+            <span class="faq-icono" aria-hidden="true"></span>
+          </button>
+          <div class="faq-respuesta">
+            <p>Conectás tu propia cuenta de Mercado Pago desde tu panel — es un proceso de unos minutos. Cuando un cliente paga, la plata entra directo a tu cuenta de Mercado Pago. clik no retiene ni intermedia tu dinero en ningún momento.</p>
+          </div>
+        </div>
+
+        <div class="faq-item animar" style="--delay:220ms">
+          <button class="faq-pregunta" aria-expanded="false">
+            ¿Puedo cancelar cuando quiera?
+            <span class="faq-icono" aria-hidden="true"></span>
+          </button>
+          <div class="faq-respuesta">
+            <p>Sí. No hay permanencia mínima ni contratos. Si en algún momento no querés seguir, cancelás desde tu panel y listo. No te cobramos ninguna penalidad ni te pedimos explicaciones.</p>
+          </div>
+        </div>
+
+        <div class="faq-item animar" style="--delay:280ms">
+          <button class="faq-pregunta" aria-expanded="false">
+            ¿Mis clientes necesitan una app o crear una cuenta?
+            <span class="faq-icono" aria-hidden="true"></span>
+          </button>
+          <div class="faq-respuesta">
+            <p>No. El menú de tu restaurante es una página web normal que se abre con la cámara del celular. Tus clientes escanean el QR, ven el menú y piden — todo desde el navegador, sin instalar nada ni registrarse en ningún lado.</p>
+          </div>
+        </div>
+
+        <div class="faq-item animar" style="--delay:340ms">
+          <button class="faq-pregunta" aria-expanded="false">
+            ¿Qué pasa cuando se me termina el mes gratis?
+            <span class="faq-icono" aria-hidden="true"></span>
+          </button>
+          <div class="faq-respuesta">
+            <p>Antes de que termine el primer mes te avisamos por correo. Si querés seguir usando clik, ingresás tu método de pago y se activa la cuota de $50.000/mes. Si no querés seguir, no hacés nada y el acceso se pausa automáticamente — sin cobros sorpresa.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA FINAL ===== -->
+  <section class="cta-final">
+    <div class="cta-final-interior contenedor">
+      <h2>Empezá hoy. El primer mes es gratis.</h2>
+      <p>En minutos tu restaurante tiene menú digital, código QR y pedidos en línea.</p>
+      <a href="register.html" class="cta-final-btn">Probar gratis</a>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="contenedor">
+      <p>clik &middot; clik.work &middot; Neiva, Huila &middot; Colombia</p>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Animaciones de entrada al scroll ----
+    const observador = new IntersectionObserver((entradas) => {
+      entradas.forEach(entrada => {
+        if (entrada.isIntersecting) {
+          entrada.target.classList.add('visible');
+          observador.unobserve(entrada.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.animar').forEach(el => observador.observe(el));
+
+    // ---- Contadores animados (easeOutExpo) ----
+    function animarContador(el) {
+      const objetivo = parseInt(el.dataset.target, 10);
+      const duracion = 1800;
+      const inicio = performance.now();
+
+      function tick(ahora) {
+        const progreso = Math.min((ahora - inicio) / duracion, 1);
+        const ease = progreso === 1 ? 1 : 1 - Math.pow(2, -10 * progreso);
+        el.textContent = Math.floor(ease * objetivo).toLocaleString('es-CO');
+        if (progreso < 1) requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    // Dispara contadores cuando la sección métricas es visible
+    let contadoresLanzados = false;
+    const secMetricas = document.querySelector('.metricas');
+
+    if (secMetricas) {
+      const obsMetricas = new IntersectionObserver((entradas) => {
+        if (entradas[0].isIntersecting && !contadoresLanzados) {
+          contadoresLanzados = true;
+          document.querySelectorAll('.contador').forEach(animarContador);
+          obsMetricas.disconnect();
+        }
+      }, { threshold: 0.3 });
+
+      obsMetricas.observe(secMetricas);
+    }
+
+    // ---- Acordeón FAQ ----
+    document.querySelectorAll('.faq-pregunta').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const estaAbierto = item.classList.contains('abierto');
+
+        document.querySelectorAll('.faq-item.abierto').forEach(i => {
+          i.classList.remove('abierto');
+          i.querySelector('.faq-pregunta').setAttribute('aria-expanded', 'false');
+        });
+
+        if (!estaAbierto) {
+          item.classList.add('abierto');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

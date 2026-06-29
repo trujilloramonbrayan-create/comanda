@@ -1,0 +1,403 @@
+/* ============================================================
+   TOKENS — paleta del menú público (distinta al panel admin)
+   ============================================================ */
+:root {
+  --c-bg:          #faf9f7;   /* blanco roto, más cálido */
+  --c-surface:     #ffffff;
+  --c-hero:        #1a0f0a;   /* marrón casi negro */
+  --c-accent:      #c9a84c;   /* oro italiano */
+  --c-accent-dark: #a8873a;
+  --c-verde:       #3d8b5e;
+  --c-border:      #ece8e1;
+  --c-text:        #1a1a1a;
+  --c-muted:       #6b7280;
+  --c-agotado:     #9ca3af;
+
+  --font-sans:  system-ui, -apple-system, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+
+  /* el menú vive centrado en una columna mobile */
+  --col: 480px;
+  --px:  18px;    /* padding horizontal de página */
+  --r:   10px;
+}
+
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* columna centrada — en desktop queda como "mockup de celular" */
+.columna {
+  max-width: var(--col);
+  margin: 0 auto;
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero {
+  background: var(--c-hero);
+  /* luz suave desde el centro, efecto fotografía con bokeh */
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(201,168,76,.18) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 30% 10%,  rgba(255,255,255,.03) 0%, transparent 60%);
+  padding: 40px var(--px) 0;
+  position: relative;
+}
+
+.hero-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-bottom: 36px;
+}
+
+/* círculo con iniciales — reemplazable por <img> con el logo real */
+.restaurante-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(201,168,76,.5);
+  background: rgba(201,168,76,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--c-accent);
+  letter-spacing: .05em;
+  margin-bottom: 16px;
+}
+
+.restaurante-nombre {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.restaurante-subtitulo {
+  font-size: .8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 18px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hero-meta span {
+  font-size: .78rem;
+  color: rgba(255,255,255,.55);
+}
+
+.badge-abierto {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(61,139,94,.2);
+  color: #6ee7a8 !important;   /* override span color */
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: .72rem !important;
+}
+
+.badge-abierto::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #6ee7a8;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hero-sep {
+  color: rgba(255,255,255,.2) !important;
+  font-size: .6rem !important;
+}
+
+/* ============================================================
+   NAV DE CATEGORÍAS — sticky
+   ============================================================ */
+.categorias-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--c-hero);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  /* sombra para cuando el hero queda atrás */
+  box-shadow: 0 2px 12px rgba(0,0,0,.35);
+}
+
+.categorias-scroll {
+  max-width: var(--col);
+  margin: 0 auto;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 var(--px);
+  gap: 2px;
+}
+.categorias-scroll::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  flex-shrink: 0;
+  padding: 14px 16px;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.45);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color .18s, border-color .18s;
+  white-space: nowrap;
+}
+
+.cat-tab:hover   { color: rgba(255,255,255,.8); }
+.cat-tab.activo  {
+  color: var(--c-accent);
+  border-bottom-color: var(--c-accent);
+}
+
+/* ============================================================
+   SECCIÓN DE CATEGORÍA
+   ============================================================ */
+.menu-body {
+  padding: 0 var(--px) 60px;
+}
+
+.categoria {
+  padding-top: 32px;
+}
+
+.categoria-titulo {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--c-text);
+  letter-spacing: -.02em;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 4px;
+}
+
+/* ============================================================
+   TARJETA DE PLATO
+   ============================================================ */
+.plato {
+  display: flex;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--c-border);
+  align-items: flex-start;
+}
+
+.plato:last-child { border-bottom: none; }
+
+/* foto — cuadrado a la derecha en mobile */
+.plato-foto {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  border-radius: var(--r);
+  overflow: hidden;
+  order: 2;   /* foto va a la derecha */
+}
+
+/* info — texto a la izquierda */
+.plato-info {
+  flex: 1;
+  min-width: 0;
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plato-cabecera {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.plato-nombre {
+  font-size: .95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--c-text);
+  flex: 1;
+  min-width: 0;
+}
+
+.plato-desc {
+  font-size: .8rem;
+  color: var(--c-muted);
+  line-height: 1.45;
+  /* máximo 2 líneas en el layout mobile */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.plato-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.plato-precio {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -.02em;
+}
+
+.plato-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+
+/* ── Estado agotado ── */
+.plato-agotado .plato-foto   { opacity: .4; }
+.plato-agotado .plato-nombre { color: var(--c-agotado); }
+.plato-agotado .plato-precio { color: var(--c-agotado); }
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.badge-popular  { background: rgba(201,168,76,.15); color: var(--c-accent-dark); }
+.badge-nuevo    { background: rgba(61,139,94,.12);  color: var(--c-verde); }
+.badge-veg      { background: rgba(61,139,94,.12);  color: var(--c-verde); }
+.badge-agotado  { background: #f3f4f6; color: var(--c-agotado); }
+
+/* ============================================================
+   PIE DE PÁGINA
+   ============================================================ */
+.pie {
+  text-align: center;
+  padding: 24px var(--px) 40px;
+  border-top: 1px solid var(--c-border);
+  font-size: .72rem;
+  color: var(--c-muted);
+  max-width: var(--col);
+  margin: 0 auto;
+}
+
+.pie a { color: var(--c-accent-dark); text-decoration: none; }
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+.oculto { display: none !important; }
+
+/* ============================================================
+   ESTADOS DE PANTALLA — cargando / error / 404 / vacío
+   ============================================================ */
+.estado-pantalla {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  padding: 48px 32px;
+  text-align: center;
+  gap: 10px;
+}
+
+.estado-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--c-text);
+  line-height: 1.4;
+  max-width: 300px;
+}
+
+.estado-subtitulo {
+  font-size: .82rem;
+  color: var(--c-muted);
+  line-height: 1.5;
+  max-width: 280px;
+}
+
+/* Spinner de carga */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--c-border);
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: girar .7s linear infinite;
+  margin-bottom: 4px;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   DESKTOP — la columna flota sobre un fondo neutro
+   ============================================================ */
+@media (min-width: 540px) {
+  body { background: #e8e4de; }
+
+  .hero,
+  .categorias-nav {
+    /* en desktop el hero no llega a los bordes de la ventana */
+    border-radius: 0;
+  }
+
+  /* envuelve todo en una tarjeta centrada */
+  .pagina {
+    max-width: var(--col);
+    margin: 32px auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.18);
+    background: var(--c-bg);
+  }
+
+  /* la columna sticky ahora es relativa al .pagina */
+  .categorias-nav { position: sticky; }
+
+  .menu-body,
+  .pie { max-width: 100%; }
+}

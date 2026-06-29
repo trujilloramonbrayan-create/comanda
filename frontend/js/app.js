@@ -1,131 +1,597 @@
-// app.js — lógica del frontend (sin conexión al backend por ahora)
-// Cuando el backend esté listo, las funciones marcadas con TODO
-// reemplazarán los datos de ejemplo por llamadas a fetch().
+// app.js — panel del dueño de restaurante
+// Conectado al backend real. Sin datos mock.
 
 // ─────────────────────────────────────────────────────────────
-// Estado global mínimo
+// Logout
 // ─────────────────────────────────────────────────────────────
 
-const estado = {
-  vistaActual: 'restaurantes',
+document.getElementById('btn-cerrar-sesion').addEventListener('click', () => {
+  localStorage.removeItem('clik_token');
+  localStorage.removeItem('clik_restaurant');
+  window.location.replace('login.html');
+});
+
+// ─────────────────────────────────────────────────────────────
+// API — fetch centralizado con JWT automático
+// ─────────────────────────────────────────────────────────────
+
+// Local (localhost / 127.0.0.1 / IP de red privada) → backend directo en :3000
+// Producción (clik.work) → URL relativa '' para que Nginx proxee al backend
+const esLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  || /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(window.location.hostname);
+const API_URL = esLocal ? `http://${window.location.hostname}:3000` : '';
+
+async function llamarAPI(ruta, opciones = {}) {
+  const token = localStorage.getItem('clik_token');
+  const { headers: hdrsExtra = {}, ...resto } = opciones;
+
+  const res = await fetch(`${API_URL}${ruta}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...hdrsExtra,
+    },
+    ...resto,
+  });
+
+  if (!res.ok) {
+    // Token vencido o inválido → redirigir al login
+    if (res.status === 401) {
+      localStorage.removeItem('clik_token');
+      localStorage.removeItem('clik_restaurant');
+      window.location.replace('login.html');
+      return;
+    }
+    const cuerpo = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(cuerpo.error ?? `Error ${res.status}`), { status: res.status });
+  }
+
+  return res.status === 204 ? null : res.json();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────
+
+function escaparHTML(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function formatearFecha(isoStr) {
+  const d = new Date(isoStr);
+  return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function formatearPlan(planHasta) {
+  if (!planHasta) return { texto: 'Sin plan', clase: 'sin-plan' };
+  const fecha = new Date(planHasta);
+  if (fecha < new Date()) return { texto: 'Plan vencido', clase: 'vencido' };
+  return { texto: `Gratis hasta ${formatearFecha(planHasta)}`, clase: 'ok' };
+}
+
+function formatearPrecio(n) {
+  return '$' + Number(n).toLocaleString('es-CO');
+}
+
+// Gradientes deterministas para la foto placeholder de cada plato
+const GRADIENTES_PLATO = [
+  'linear-gradient(145deg,#e8956d,#c94e35)',
+  'linear-gradient(145deg,#c4956a,#8b6040)',
+  'linear-gradient(145deg,#e8b86d,#c08030)',
+  'linear-gradient(145deg,#e86050,#c03020)',
+  'linear-gradient(145deg,#e8d498,#c0a040)',
+  'linear-gradient(145deg,#b8d498,#6a9040)',
+  'linear-gradient(145deg,#d4a870,#9a6c38)',
+  'linear-gradient(145deg,#6b4838,#3a2018)',
+];
+
+function gradientePlato(id) {
+  return GRADIENTES_PLATO[Math.abs(Number(id)) % GRADIENTES_PLATO.length];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Estado global
+// ─────────────────────────────────────────────────────────────
+
+const estado = { vistaActual: 'menu' };
+
+const estadoMenu = {
+  categorias: [],       // cargadas desde GET /menu
+  abierta: {},          // { catId: boolean } — estado acordeón en memoria
 };
 
+// Contexto de modales
+const ctxCategoria = { modo: 'crear', catId: null };
+const ctxPlato     = { modo: 'crear', platoId: null, catId: null };
+
 // ─────────────────────────────────────────────────────────────
-// Navegación entre vistas
+// Navegación
 // ─────────────────────────────────────────────────────────────
 
 function cambiarVista(nombre) {
-  // Desactivar ítem anterior
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('activo'));
 
-  // Ocultar vista anterior
   const vistaAnterior = document.getElementById(`vista-${estado.vistaActual}`);
   if (vistaAnterior) vistaAnterior.classList.add('oculto');
 
-  // Activar nueva vista
   estado.vistaActual = nombre;
+
   const vistaNueva = document.getElementById(`vista-${nombre}`);
   if (vistaNueva) vistaNueva.classList.remove('oculto');
 
-  // Activar ítem de nav
   const navItem = document.querySelector(`[data-vista="${nombre}"]`);
   if (navItem) navItem.classList.add('activo');
 
-  // Actualizar título y botón de acción del topbar
   const titulos = {
-    restaurantes: 'Restaurantes',
-    mesas:        'Mesas',
-    pedidos:      'Pedidos',
-    menu:         'Menú / Productos',
+    menu:    'Menú',
+    qr:      'Mi QR',
+    pedidos: 'Pedidos',
+    mesas:   'Mesas',
   };
-
   document.getElementById('titulo-pagina').textContent = titulos[nombre] ?? nombre;
 
-  // El botón "Nuevo" solo tiene sentido en la vista de restaurantes por ahora
+  // btn-nuevo solo aparece en la vista menú
   const btnNuevo = document.getElementById('btn-nuevo');
-  btnNuevo.textContent = `+ Nuevo ${titulos[nombre].toLowerCase().replace(' / productos', '')}`;
-}
-
-// ─────────────────────────────────────────────────────────────
-// Modal — abrir / cerrar
-// ─────────────────────────────────────────────────────────────
-
-const modalOverlay = document.getElementById('modal-restaurante');
-const formRestaurante = document.getElementById('form-restaurante');
-
-function abrirModal() {
-  formRestaurante.reset();
-  document.getElementById('modal-titulo').textContent = 'Nuevo restaurante';
-  modalOverlay.classList.remove('oculto');
-  document.getElementById('campo-nombre').focus();
-}
-
-function cerrarModal() {
-  modalOverlay.classList.add('oculto');
-}
-
-// Cerrar al hacer clic fuera del cuadro
-modalOverlay.addEventListener('click', e => {
-  if (e.target === modalOverlay) cerrarModal();
-});
-
-// Cerrar con Escape
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') cerrarModal();
-});
-
-// ─────────────────────────────────────────────────────────────
-// Slug — generación automática desde el nombre
-// ─────────────────────────────────────────────────────────────
-
-function generarSlug(texto) {
-  return texto
-    .toLowerCase()
-    .normalize('NFD')                          // separa los diacríticos
-    .replace(/[̀-ͯ]/g, '')           // elimina los diacríticos
-    .replace(/[^a-z0-9]+/g, '-')              // reemplaza no alfanumérico con -
-    .replace(/^-+|-+$/g, '');                 // recorta guiones extremos
-}
-
-const campoNombre = document.getElementById('campo-nombre');
-const campoSlug   = document.getElementById('campo-slug');
-let slugManual = false;  // true cuando el usuario editó el slug a mano
-
-campoNombre.addEventListener('input', () => {
-  if (!slugManual) {
-    campoSlug.value = generarSlug(campoNombre.value);
+  if (nombre === 'menu') {
+    btnNuevo.classList.remove('oculto');
+  } else {
+    btnNuevo.classList.add('oculto');
   }
-});
 
-// Si el usuario toca el campo slug, dejamos de autogenerar
-campoSlug.addEventListener('input', () => {
-  slugManual = campoSlug.value !== generarSlug(campoNombre.value);
-});
+  if (nombre === 'menu') cargarMenu();
+  if (nombre === 'qr')   cargarQR();
+}
 
 // ─────────────────────────────────────────────────────────────
-// Formulario — submit
-// TODO: reemplazar con fetch() POST /restaurants
+// Vista QR
 // ─────────────────────────────────────────────────────────────
 
-formRestaurante.addEventListener('submit', e => {
-  e.preventDefault();
-  const nombre = campoNombre.value.trim();
-  const slug   = campoSlug.value.trim();
+async function cargarQR() {
+  try {
+    const r = await llamarAPI('/mi-restaurante');
 
-  if (!nombre || !slug) return;
+    // URL del menú público: menu.html?slug=<slug>
+    // Esta convención la lee menu.js con URLSearchParams. El QR y el menú usan la misma URL.
+    // En producción, Nginx puede reescribir /r/:slug → menu.html?slug=:slug sin cambiar este código.
+    const base = window.location.href.replace(/\/[^/]*$/, '/');
+    const urlMenu = `${base}menu.html?slug=${encodeURIComponent(r.slug)}`;
 
-  // Por ahora solo muestra en consola; aquí irá el fetch al backend
-  console.log('Guardar restaurante:', { nombre, slug });
+    // QR via api.qrserver.com — gratuito, no requiere clave
+    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(urlMenu)}&bgcolor=ffffff&color=1e293b&margin=3`;
 
-  cerrarModal();
-});
+    document.getElementById('qr-imagen').src  = qrSrc;
+    document.getElementById('qr-url-texto').textContent = urlMenu;
+    document.getElementById('qr-descargar').href = qrSrc;
+  } catch {
+    // Si falla la carga del restaurante, el QR queda en blanco
+  }
+}
 
 // ─────────────────────────────────────────────────────────────
-// Inicialización — conectar eventos
+// Sidebar — nombre del restaurante
+// ─────────────────────────────────────────────────────────────
+
+async function cargarNombreRestaurante() {
+  try {
+    const r = await llamarAPI('/mi-restaurante');
+    const el = document.getElementById('sidebar-restaurante-nombre');
+    const plan = formatearPlan(r.plan_hasta);
+    el.innerHTML = `
+      <span class="sidebar-rest-nombre">${escaparHTML(r.nombre)}</span>
+      <span class="badge-plan ${plan.clase}">${plan.texto}</span>`;
+  } catch {
+    // Silencioso: si falla, el sidebar queda en "…"
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Editor de menú — carga desde la BD
+// ─────────────────────────────────────────────────────────────
+
+async function cargarMenu() {
+  const contenedor = document.getElementById('lista-categorias');
+  contenedor.innerHTML = '<div class="cargando-vista">Cargando menú…</div>';
+  try {
+    const datos = await llamarAPI('/menu');
+    estadoMenu.categorias = datos;
+    renderizarCategorias();
+  } catch (err) {
+    contenedor.innerHTML = `<div class="error-menu">Error al cargar el menú: ${escaparHTML(err.message)}</div>`;
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────
+
+function renderizarCategorias() {
+  const contenedor = document.getElementById('lista-categorias');
+
+  if (estadoMenu.categorias.length === 0) {
+    contenedor.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon"></div>
+        <h3>Sin categorías</h3>
+        <p>Creá una categoría para empezar a armar el menú.</p>
+      </div>`;
+    return;
+  }
+
+  contenedor.innerHTML = estadoMenu.categorias.map(htmlCategoria).join('');
+}
+
+function htmlCategoria(cat) {
+  const abierta = estadoMenu.abierta[cat.id] ?? true;
+  const n = cat.platos.length;
+  return `
+    <div class="categoria-item${abierta ? ' abierta' : ''}" data-cat-id="${cat.id}">
+      <div class="categoria-cabecera">
+        <button class="categoria-toggle btn-toggle-cat" data-cat-id="${cat.id}" type="button" aria-label="Expandir">&#9660;</button>
+        <span class="categoria-nombre">${escaparHTML(cat.nombre)}</span>
+        <span class="categoria-count">${n} plato${n !== 1 ? 's' : ''}</span>
+        <div class="categoria-acciones">
+          <button class="btn btn-ghost btn-editar-cat"    data-cat-id="${cat.id}" type="button">Editar</button>
+          <button class="btn btn-danger btn-eliminar-cat" data-cat-id="${cat.id}" type="button">Eliminar</button>
+        </div>
+      </div>
+      <div class="categoria-cuerpo">
+        ${n === 0 ? '<div class="empty-categoria">Aún no hay platos en esta categoría.</div>' : ''}
+        ${cat.platos.map(htmlPlato).join('')}
+        <button class="btn btn-agregar-plato btn-nuevo-plato" data-cat-id="${cat.id}" type="button">+ Agregar plato</button>
+      </div>
+    </div>`;
+}
+
+function htmlPlato(plato) {
+  const agotado = !plato.disponible;
+  const fotoEstilo = plato.imagen_url
+    ? `background-image:url('${plato.imagen_url}');background-size:cover;background-position:center`
+    : `background:${gradientePlato(plato.id)}`;
+  return `
+    <div class="plato-fila${agotado ? ' agotado' : ''}" data-plato-id="${plato.id}" data-cat-id="${plato.categoria_id}">
+      <div class="plato-foto-mini" style="${fotoEstilo}"></div>
+      <div class="plato-fila-info">
+        <span class="plato-fila-nombre">${escaparHTML(plato.nombre)}</span>
+        <span class="plato-fila-desc">${escaparHTML(plato.descripcion ?? '')}</span>
+      </div>
+      <span class="plato-fila-precio">${formatearPrecio(plato.precio)}</span>
+      <div class="plato-fila-acciones">
+        <button class="btn-disponible ${agotado ? 'agotado' : 'disponible'} btn-toggle-disp" type="button">
+          ${agotado ? 'Agotado' : 'Disponible'}
+        </button>
+        <button class="btn btn-ghost btn-editar-plato"    type="button">Editar</button>
+        <button class="btn btn-danger btn-eliminar-plato" type="button">Eliminar</button>
+      </div>
+    </div>`;
+}
+
+// ── CRUD categorías ────────────────────────────────────────────
+
+function toggleCategoria(id) {
+  estadoMenu.abierta[id] = !(estadoMenu.abierta[id] ?? true);
+  renderizarCategorias();
+}
+
+async function guardarCategoria(nombre, catId = null) {
+  try {
+    if (catId) {
+      await llamarAPI(`/categorias/${catId}`, { method: 'PUT', body: JSON.stringify({ nombre }) });
+    } else {
+      await llamarAPI('/categorias', { method: 'POST', body: JSON.stringify({ nombre }) });
+    }
+    await cargarMenu();
+  } catch (err) {
+    const el = document.getElementById('modal-cat-error');
+    el.textContent = err.message;
+    el.classList.remove('oculto');
+  }
+}
+
+async function confirmarEliminarCategoria(id) {
+  const cat = estadoMenu.categorias.find(c => c.id == id);
+  if (!cat) return;
+  const aviso = cat.platos.length
+    ? `¿Eliminar "${cat.nombre}"? Se eliminarán también sus ${cat.platos.length} plato(s).`
+    : `¿Eliminar la categoría "${cat.nombre}"?`;
+  if (!confirm(aviso)) return;
+  try {
+    await llamarAPI(`/categorias/${id}`, { method: 'DELETE' });
+    await cargarMenu();
+  } catch (err) {
+    alert(`Error al eliminar: ${err.message}`);
+  }
+}
+
+// ── CRUD platos ────────────────────────────────────────────────
+
+// Guarda el plato y devuelve el objeto guardado (con su id), o null si falla.
+async function guardarPlato(datos, platoId = null, catId = null) {
+  try {
+    if (platoId) {
+      return await llamarAPI(`/platos/${platoId}`, { method: 'PUT', body: JSON.stringify(datos) });
+    } else {
+      return await llamarAPI('/platos', {
+        method: 'POST',
+        body: JSON.stringify({ ...datos, categoria_id: Number(catId) }),
+      });
+    }
+  } catch (err) {
+    const el = document.getElementById('modal-plato-error');
+    el.textContent = err.message;
+    el.classList.remove('oculto');
+    return null;
+  }
+}
+
+// Sube la imagen de un plato al backend (raw binary, sin multipart).
+// Devuelve true si tuvo éxito.
+async function subirImagenPlato(platoId, archivo) {
+  const TIPOS_VALIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!TIPOS_VALIDOS.includes(archivo.type)) {
+    mostrarErrorPlato('Solo se permiten imágenes JPG, PNG o WebP');
+    return false;
+  }
+
+  const token = localStorage.getItem('clik_token');
+  try {
+    const res = await fetch(`${API_URL}/platos/${platoId}/imagen`, {
+      method: 'POST',
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        'Content-Type': archivo.type,
+      },
+      body: archivo,
+    });
+
+    if (res.status === 401) {
+      localStorage.removeItem('clik_token');
+      localStorage.removeItem('clik_restaurant');
+      window.location.replace('login.html');
+      return false;
+    }
+
+    if (!res.ok) {
+      const cuerpo = await res.json().catch(() => ({}));
+      mostrarErrorPlato(cuerpo.error ?? 'Error al subir la imagen');
+      return false;
+    }
+
+    return true;
+  } catch {
+    mostrarErrorPlato('No se pudo conectar con el servidor al subir la imagen');
+    return false;
+  }
+}
+
+function mostrarErrorPlato(msg) {
+  const el = document.getElementById('modal-plato-error');
+  el.textContent = msg;
+  el.classList.remove('oculto');
+}
+
+async function toggleDisponiblePlato(platoId) {
+  // Buscar el valor actual en el estado en memoria
+  let actual;
+  for (const cat of estadoMenu.categorias) {
+    actual = cat.platos.find(p => p.id == platoId);
+    if (actual) break;
+  }
+  if (!actual) return;
+  try {
+    await llamarAPI(`/platos/${platoId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ disponible: !actual.disponible }),
+    });
+    await cargarMenu();
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+}
+
+async function confirmarEliminarPlato(platoId) {
+  let actual;
+  for (const cat of estadoMenu.categorias) {
+    actual = cat.platos.find(p => p.id == platoId);
+    if (actual) break;
+  }
+  if (!actual || !confirm(`¿Eliminar "${actual.nombre}"?`)) return;
+  try {
+    await llamarAPI(`/platos/${platoId}`, { method: 'DELETE' });
+    await cargarMenu();
+  } catch (err) {
+    alert(`Error al eliminar: ${err.message}`);
+  }
+}
+
+// ── Modal categoría ────────────────────────────────────────────
+
+function abrirModalCategoria(modo, catId = null) {
+  ctxCategoria.modo  = modo;
+  ctxCategoria.catId = catId;
+  document.getElementById('form-categoria').reset();
+  document.getElementById('modal-cat-error').classList.add('oculto');
+  document.getElementById('modal-cat-titulo').textContent = modo === 'editar' ? 'Editar categoría' : 'Nueva categoría';
+  if (modo === 'editar') {
+    const cat = estadoMenu.categorias.find(c => c.id == catId);
+    if (cat) document.getElementById('campo-cat-nombre').value = cat.nombre;
+  }
+  document.getElementById('modal-categoria').classList.remove('oculto');
+  document.getElementById('campo-cat-nombre').focus();
+}
+
+function cerrarModalCategoria() {
+  document.getElementById('modal-categoria').classList.add('oculto');
+}
+
+// ── Modal plato ────────────────────────────────────────────────
+
+// Aplica imagen real o gradiente al elemento preview del modal.
+function mostrarFotoPreviewModal(elemento, imagenUrl, id) {
+  if (imagenUrl) {
+    elemento.style.cssText = `background-image:url('${imagenUrl}');background-size:cover;background-position:center`;
+  } else {
+    elemento.style.cssText = `background:${gradientePlato(id)}`;
+  }
+}
+
+function abrirModalPlato(modo, platoId = null, catId = null) {
+  ctxPlato.modo    = modo;
+  ctxPlato.platoId = platoId;
+  ctxPlato.catId   = catId;
+  document.getElementById('form-plato').reset();
+  // Limpiar el input de archivo explícitamente (reset() no lo limpia en todos los browsers)
+  document.getElementById('campo-plato-imagen').value = '';
+  document.getElementById('modal-plato-error').classList.add('oculto');
+  document.getElementById('modal-plato-titulo').textContent = modo === 'editar' ? 'Editar plato' : 'Nuevo plato';
+
+  const preview = document.getElementById('plato-foto-preview');
+
+  if (modo === 'editar') {
+    for (const cat of estadoMenu.categorias) {
+      const p = cat.platos.find(p => p.id == platoId);
+      if (p) {
+        document.getElementById('campo-plato-nombre').value = p.nombre;
+        document.getElementById('campo-plato-desc').value   = p.descripcion ?? '';
+        document.getElementById('campo-plato-precio').value = p.precio;
+        document.getElementById('campo-plato-disp').checked = p.disponible;
+        mostrarFotoPreviewModal(preview, p.imagen_url, p.id);
+        break;
+      }
+    }
+  } else {
+    document.getElementById('campo-plato-disp').checked = true;
+    mostrarFotoPreviewModal(preview, null, Date.now());
+  }
+
+  document.getElementById('modal-plato').classList.remove('oculto');
+  document.getElementById('campo-plato-nombre').focus();
+}
+
+function cerrarModalPlato() {
+  document.getElementById('modal-plato').classList.add('oculto');
+}
+
+// ── Inicialización del editor ──────────────────────────────────
+
+function inicializarEditorMenu() {
+  // Delegación de eventos sobre toda la lista de categorías
+  document.getElementById('lista-categorias').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+
+    if (btn) {
+      if (btn.classList.contains('btn-toggle-cat'))   return toggleCategoria(btn.dataset.catId);
+      if (btn.classList.contains('btn-editar-cat'))   return abrirModalCategoria('editar', btn.dataset.catId);
+      if (btn.classList.contains('btn-eliminar-cat')) return confirmarEliminarCategoria(btn.dataset.catId);
+      if (btn.classList.contains('btn-nuevo-plato'))  return abrirModalPlato('crear', null, btn.dataset.catId);
+
+      const fila = btn.closest('.plato-fila');
+      if (fila) {
+        if (btn.classList.contains('btn-toggle-disp'))    return toggleDisponiblePlato(fila.dataset.platoId);
+        if (btn.classList.contains('btn-editar-plato'))   return abrirModalPlato('editar', fila.dataset.platoId, fila.dataset.catId);
+        if (btn.classList.contains('btn-eliminar-plato')) return confirmarEliminarPlato(fila.dataset.platoId);
+      }
+      return;
+    }
+
+    // Click en cabecera (fuera de botones) → toggle acordeón
+    const cabecera = e.target.closest('.categoria-cabecera');
+    if (cabecera) {
+      const item = cabecera.closest('.categoria-item');
+      if (item) toggleCategoria(item.dataset.catId);
+    }
+  });
+
+  // Modal categoría — cerrar
+  document.getElementById('btn-cerrar-cat').addEventListener('click', cerrarModalCategoria);
+  document.getElementById('btn-cancelar-cat').addEventListener('click', cerrarModalCategoria);
+  document.getElementById('modal-categoria').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-categoria')) cerrarModalCategoria();
+  });
+
+  // Modal categoría — guardar
+  document.getElementById('form-categoria').addEventListener('submit', async e => {
+    e.preventDefault();
+    const nombre = document.getElementById('campo-cat-nombre').value.trim();
+    if (!nombre) return;
+    const btn = e.target.querySelector('[type="submit"]');
+    btn.disabled = true;
+    await guardarCategoria(nombre, ctxCategoria.modo === 'editar' ? ctxCategoria.catId : null);
+    btn.disabled = false;
+    // cerrarModalCategoria solo si no hubo error (error queda visible en el modal)
+    if (document.getElementById('modal-cat-error').classList.contains('oculto')) {
+      cerrarModalCategoria();
+    }
+  });
+
+  // Modal plato — cerrar
+  document.getElementById('btn-cerrar-plato').addEventListener('click', cerrarModalPlato);
+  document.getElementById('btn-cancelar-plato').addEventListener('click', cerrarModalPlato);
+  document.getElementById('modal-plato').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-plato')) cerrarModalPlato();
+  });
+
+  // Modal plato — preview en tiempo real al seleccionar archivo
+  document.getElementById('campo-plato-imagen').addEventListener('change', e => {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    const preview = document.getElementById('plato-foto-preview');
+    const url = URL.createObjectURL(archivo);
+    preview.style.cssText = `background-image:url('${url}');background-size:cover;background-position:center`;
+  });
+
+  // Preview es clickeable para abrir el selector de archivo
+  document.getElementById('plato-foto-preview').addEventListener('click', () => {
+    document.getElementById('campo-plato-imagen').click();
+  });
+
+  // Modal plato — guardar (datos + imagen si se seleccionó)
+  document.getElementById('form-plato').addEventListener('submit', async e => {
+    e.preventDefault();
+    const nombre      = document.getElementById('campo-plato-nombre').value.trim();
+    const descripcion = document.getElementById('campo-plato-desc').value.trim();
+    const precio      = parseInt(document.getElementById('campo-plato-precio').value, 10);
+    const disponible  = document.getElementById('campo-plato-disp').checked;
+    if (!nombre || isNaN(precio) || precio < 0) return;
+
+    const archivo = document.getElementById('campo-plato-imagen').files[0];
+
+    const btn = e.target.querySelector('[type="submit"]');
+    btn.disabled = true;
+
+    const plato = await guardarPlato(
+      { nombre, descripcion, precio, disponible },
+      ctxPlato.modo === 'editar' ? ctxPlato.platoId : null,
+      ctxPlato.catId
+    );
+
+    if (plato) {
+      if (archivo) await subirImagenPlato(plato.id, archivo);
+      await cargarMenu();
+    }
+
+    btn.disabled = false;
+    if (document.getElementById('modal-plato-error').classList.contains('oculto')) {
+      cerrarModalPlato();
+    }
+  });
+
+  // Escape cierra cualquier modal abierto
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    cerrarModalCategoria();
+    cerrarModalPlato();
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Inicialización principal
 // ─────────────────────────────────────────────────────────────
 
 function init() {
-  // Navegación
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', e => {
       e.preventDefault();
@@ -133,10 +599,17 @@ function init() {
     });
   });
 
-  // Botones del modal
-  document.getElementById('btn-nuevo').addEventListener('click', abrirModal);
-  document.getElementById('btn-cerrar').addEventListener('click', cerrarModal);
-  document.getElementById('btn-cancelar').addEventListener('click', cerrarModal);
+  document.getElementById('btn-nuevo').addEventListener('click', () => {
+    if (estado.vistaActual === 'menu') abrirModalCategoria('crear');
+  });
+
+  inicializarEditorMenu();
+
+  // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
+  cargarNombreRestaurante();
+
+  // Vista inicial: menú
+  cargarMenu();
 }
 
 init();

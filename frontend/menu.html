@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Menú digital" id="meta-desc" />
+  <meta name="theme-color" content="#1a0f0a" />
+  <title>Menú</title>
+  <link rel="stylesheet" href="css/menu.css" />
+</head>
+<body>
+
+<div class="pagina">
+
+  <!-- ═══════════════════════════════
+       ESTADOS: cargando / error / vacío
+  ════════════════════════════════════ -->
+
+  <!-- Visible por defecto hasta que el fetch responda -->
+  <div class="estado-pantalla" id="estado-cargando">
+    <div class="spinner"></div>
+    <p>Cargando menú…</p>
+  </div>
+
+  <!-- Se muestra en caso de 404, error de red o menú vacío -->
+  <div class="estado-pantalla oculto" id="estado-mensaje">
+    <p class="estado-titulo"    id="estado-titulo"></p>
+    <p class="estado-subtitulo" id="estado-subtitulo"></p>
+  </div>
+
+  <!-- ═══════════════════════════════
+       CONTENIDO REAL — oculto hasta que el fetch tenga éxito
+  ════════════════════════════════════ -->
+
+  <header class="hero oculto" id="seccion-hero">
+    <div class="columna hero-contenido">
+      <!-- Iniciales del restaurante — JS las llena -->
+      <div class="restaurante-logo" id="restaurante-logo"></div>
+      <h1 class="restaurante-nombre" id="restaurante-nombre"></h1>
+      <p class="restaurante-subtitulo">Menú digital</p>
+      <div class="hero-meta">
+        <span class="badge-abierto">Abierto</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs de categorías — JS los genera dinámicamente -->
+  <nav class="categorias-nav oculto" id="nav-cat">
+    <div class="categorias-scroll" id="contenedor-tabs"></div>
+  </nav>
+
+  <!-- Secciones del menú — JS las genera dinámicamente -->
+  <main class="menu-body columna oculto" id="menu-body"></main>
+
+  <footer class="pie oculto" id="seccion-pie">
+    Los precios incluyen IVA<br>
+    <a href="https://clik.work">Powered by clik</a>
+  </footer>
+
+</div><!-- /pagina -->
+
+<script src="js/menu.js"></script>
+</body>
+</html>

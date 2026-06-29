@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear cuenta — clik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <a href="landing.html" class="auth-logo">clik</a>
+
+  <div class="auth-card">
+    <h1 class="auth-titulo">Crear tu cuenta</h1>
+    <p class="auth-subtitulo">Primer mes gratis, sin tarjeta de crédito.</p>
+
+    <!-- Error general del servidor -->
+    <div class="auth-error" id="error-general" role="alert"></div>
+
+    <form id="form-registro" novalidate>
+
+      <div class="campo">
+        <label for="campo-nombre">Nombre del restaurante</label>
+        <input
+          type="text"
+          id="campo-nombre"
+          name="nombre_restaurante"
+          placeholder="Ej: La Leña & Brasa"
+          autocomplete="organization"
+          maxlength="255"
+        >
+        <span class="campo-error-msg" id="error-nombre"></span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-slug">URL de tu menú</label>
+        <input
+          type="text"
+          id="campo-slug"
+          name="slug"
+          placeholder="la-lena-brasa"
+          autocomplete="off"
+          maxlength="100"
+        >
+        <span class="campo-hint">Solo minúsculas, números y guiones. Ej: <strong>mi-restaurante</strong></span>
+        <span class="campo-error-msg" id="error-slug"></span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-email">Correo electrónico</label>
+        <input
+          type="email"
+          id="campo-email"
+          name="email"
+          placeholder="vos@turestaurante.com"
+          autocomplete="email"
+        >
+        <span class="campo-error-msg" id="error-email"></span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-password">Contraseña</label>
+        <input
+          type="password"
+          id="campo-password"
+          name="password"
+          placeholder="Mínimo 8 caracteres"
+          autocomplete="new-password"
+        >
+        <span class="campo-hint">Mínimo 8 caracteres.</span>
+        <span class="campo-error-msg" id="error-password"></span>
+      </div>
+
+      <button type="submit" class="btn-auth" id="btn-submit">
+        Crear cuenta gratis
+      </button>
+
+    </form>
+
+    <p class="auth-link">
+      ¿Ya tenés cuenta? <a href="login.html">Iniciá sesión</a>
+    </p>
+  </div>
+
+  <script>
+    const esLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      || /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(window.location.hostname);
+    const API_URL = esLocal ? `http://${window.location.hostname}:3000` : '';
+
+    // ── Generación automática del slug ────────────────────────
+    function generarSlug(texto) {
+      return texto
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    const campoNombre   = document.getElementById('campo-nombre');
+    const campoSlug     = document.getElementById('campo-slug');
+    let slugManual      = false;
+
+    campoNombre.addEventListener('input', () => {
+      if (!slugManual) {
+        campoSlug.value = generarSlug(campoNombre.value);
+      }
+    });
+
+    campoSlug.addEventListener('input', () => {
+      slugManual = campoSlug.value !== generarSlug(campoNombre.value);
+    });
+
+    // ── Helpers de error ─────────────────────────────────────
+    function mostrarErrorCampo(id, mensaje) {
+      const el = document.getElementById(id);
+      el.textContent = mensaje;
+      el.classList.add('visible');
+      document.getElementById(id.replace('error-', 'campo-')).classList.add('invalido');
+    }
+
+    function limpiarErrores() {
+      ['error-nombre', 'error-slug', 'error-email', 'error-password'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = '';
+        el.classList.remove('visible');
+      });
+      ['campo-nombre', 'campo-slug', 'campo-email', 'campo-password'].forEach(id => {
+        document.getElementById(id).classList.remove('invalido');
+      });
+      const general = document.getElementById('error-general');
+      general.textContent = '';
+      general.classList.remove('visible');
+    }
+
+    function mostrarErrorGeneral(mensaje) {
+      const el = document.getElementById('error-general');
+      el.textContent = mensaje;
+      el.classList.add('visible');
+    }
+
+    // ── Submit ────────────────────────────────────────────────
+    document.getElementById('form-registro').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      limpiarErrores();
+
+      const nombre_restaurante = campoNombre.value.trim();
+      const slug               = campoSlug.value.trim();
+      const email              = document.getElementById('campo-email').value.trim();
+      const password           = document.getElementById('campo-password').value;
+
+      // Validación client-side (espejo de la del backend)
+      let hayErrores = false;
+      if (!nombre_restaurante) {
+        mostrarErrorCampo('error-nombre', 'El nombre del restaurante es requerido');
+        hayErrores = true;
+      }
+      if (!slug) {
+        mostrarErrorCampo('error-slug', 'El slug es requerido');
+        hayErrores = true;
+      } else if (!/^[a-z0-9-]+$/.test(slug)) {
+        mostrarErrorCampo('error-slug', 'Solo minúsculas, números y guiones');
+        hayErrores = true;
+      }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        mostrarErrorCampo('error-email', 'El email no tiene un formato válido');
+        hayErrores = true;
+      }
+      if (password.length < 8) {
+        mostrarErrorCampo('error-password', 'La contraseña debe tener al menos 8 caracteres');
+        hayErrores = true;
+      }
+      if (hayErrores) return;
+
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.textContent = 'Creando cuenta…';
+
+      try {
+        const respuesta = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre_restaurante, slug, email, password }),
+        });
+
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+          // El backend devuelve mensajes claros en { error }
+          mostrarErrorGeneral(datos.error ?? `Error ${respuesta.status}`);
+          return;
+        }
+
+        // Éxito: guardar token y redirigir al panel
+        localStorage.setItem('clik_token', datos.token);
+        localStorage.setItem('clik_restaurant', JSON.stringify(datos.restaurant));
+        window.location.href = 'index.html';
+
+      } catch {
+        mostrarErrorGeneral('No se pudo conectar con el servidor. ¿Está corriendo el backend?');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear cuenta gratis';
+      }
+    });
+  </script>
+
+</body>
+</html>

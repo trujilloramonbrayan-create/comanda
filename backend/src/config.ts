@@ -18,4 +18,6 @@ export const config = {
   port: parseInt(process.env.PORT ?? '3000', 10),
   databaseUrl: requerirEnv('DATABASE_URL'),
   jwtSecret: requerirEnv('JWT_SECRET'),
+  supabaseUrl: requerirEnv('SUPABASE_URL'),
+  supabaseServiceKey: requerirEnv('SUPABASE_SERVICE_ROLE_KEY'),
 };

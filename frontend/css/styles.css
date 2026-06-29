@@ -30,8 +30,9 @@
   /* espaciado y formas */
   --radius:    6px;
   --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
   --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,.12);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.13);
 }
 
 /* ============================================================
@@ -71,6 +72,42 @@ input, textarea { font-family: inherit; }
   top: 0; left: 0;
   height: 100vh;
   overflow-y: auto;
+}
+
+/* Nombre del restaurante en el sidebar */
+.sidebar-restaurante {
+  padding: 12px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-rest-nombre {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-cerrar-sesion {
+  margin: auto 16px 20px;
+  padding: 0.55rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius);
+  color: #94a3b8;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-cerrar-sesion:hover {
+  background: rgba(255,255,255,0.07);
+  color: #fff;
 }
 
 .sidebar-logo {
@@ -358,12 +395,20 @@ input, textarea { font-family: inherit; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15,23,42,.5);
+  background: rgba(15,23,42,.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+  /* padding + overflow-y: el modal nunca queda fuera del viewport */
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+/* En móvil, alinear arriba para que se pueda hacer scroll */
+@media (max-width: 520px) {
+  .modal-overlay { align-items: flex-start; }
 }
 
 .modal {
@@ -371,8 +416,12 @@ input, textarea { font-family: inherit; }
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   width: 100%;
-  max-width: 440px;
-  overflow: hidden;
+  max-width: 460px;
+  /* Estructura flex para que el body sea el único que scrollea */
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  /* no overflow: hidden — dejar que flex maneje el scroll interno */
 }
 
 .modal-head {
@@ -381,6 +430,7 @@ input, textarea { font-family: inherit; }
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
 }
 
 .modal-head h2 {
@@ -400,7 +450,12 @@ input, textarea { font-family: inherit; }
 }
 .modal-close:hover { background: var(--c-border); color: var(--c-text); }
 
-.modal-body { padding: 24px; }
+/* Body scrolleable — es la única sección que crece */
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
 
 .modal-foot {
   display: flex;
@@ -409,6 +464,8 @@ input, textarea { font-family: inherit; }
   padding: 16px 24px;
   border-top: 1px solid var(--c-border);
   background: var(--c-bg);
+  flex-shrink: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* ── Campos de formulario ── */
@@ -450,3 +507,520 @@ input, textarea { font-family: inherit; }
    UTILIDADES
    ============================================================ */
 .oculto { display: none !important; }
+
+/* ============================================================
+   EDITOR DE MENÚ
+   ============================================================ */
+
+/* Barra superior: selector de restaurante + botón */
+.menu-editor-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.menu-editor-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-editor-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.menu-select {
+  padding: 7px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-family: var(--font);
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.menu-select:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+}
+
+/* ── Tarjeta de categoría (acordeón) ── */
+.categoria-item {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.categoria-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.categoria-cabecera:hover { background: var(--c-bg); }
+
+/* chevron — rotado cuando está cerrada, vertical cuando abierta */
+.categoria-toggle {
+  background: none;
+  border: none;
+  color: var(--c-muted);
+  font-size: .65rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: transform .2s;
+  transform: rotate(-90deg);  /* → cerrada */
+  flex-shrink: 0;
+}
+.categoria-item.abierta .categoria-toggle { transform: rotate(0deg); }
+
+.categoria-nombre {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+
+.categoria-count {
+  font-size: var(--text-xs);
+  color: var(--c-muted);
+  white-space: nowrap;
+}
+
+.categoria-acciones {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.categoria-cuerpo {
+  display: none;
+  border-top: 1px solid var(--c-border);
+  padding: 8px 16px 12px;
+}
+.categoria-item.abierta .categoria-cuerpo { display: block; }
+
+/* ── Fila de plato ── */
+.plato-fila {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+  transition: opacity .15s;
+}
+.plato-fila:last-of-type { border-bottom: none; }
+
+/* miniatura — gradiente determinista, reemplazable por <img> */
+.plato-foto-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.plato-fila-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.plato-fila-nombre {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plato-fila-desc {
+  font-size: var(--text-xs);
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plato-fila-precio {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.plato-fila-acciones {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Estado agotado: atenúa la fila (consistente con el menú público) */
+.plato-fila.agotado .plato-foto-mini    { opacity: .35; }
+.plato-fila.agotado .plato-fila-nombre  { color: var(--c-muted); }
+.plato-fila.agotado .plato-fila-precio  { color: var(--c-muted); }
+
+/* ── Toggle disponible/agotado ── */
+.btn-disponible {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-disponible.disponible {
+  background: rgba(16,185,129,.1);
+  color: #059669;
+}
+.btn-disponible.agotado {
+  background: var(--c-border);
+  color: var(--c-muted);
+}
+
+/* ── Botón "Agregar plato" ── */
+.btn-agregar-plato {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.btn-agregar-plato:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: rgba(245,158,11,.04);
+}
+
+/* ── Empty state dentro de categoría ── */
+.empty-categoria {
+  text-align: center;
+  padding: 20px;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+}
+
+/* ── Modal: foto placeholder + upload area ── */
+.foto-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--radius);
+  background: var(--c-bg);
+}
+
+.plato-foto-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  /* background/background-image se setea por JS según el ID o imagen_url del plato */
+}
+
+/* Overlay "Cambiar" que aparece al pasar el mouse por encima */
+.plato-foto-preview::after {
+  content: 'Cambiar';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.plato-foto-preview:hover::after { opacity: 1; }
+
+.foto-upload-label {
+  font-size: var(--text-xs);
+  color: var(--c-muted);
+}
+
+/* El input de archivo está oculto; se activa al hacer clic en el preview */
+.campo-imagen-input { display: none; }
+
+/* ── Textarea (mismo estilo que input) ── */
+.campo textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  background: var(--c-surface);
+  color: var(--c-text);
+  outline: none;
+  resize: vertical;
+  min-height: 64px;
+  font-family: var(--font);
+  transition: border-color .15s, box-shadow .15s;
+}
+.campo textarea:focus {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+}
+
+/* ── Checkbox inline (toggle disponible en modal) ── */
+.campo-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.campo-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--c-accent);
+}
+
+/* ============================================================
+   BADGE PLAN (estado de suscripción en la tabla)
+   ============================================================ */
+.badge-plan {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.badge-plan.ok      { background: rgba(16,185,129,.1); color: #059669; }
+.badge-plan.vencido { background: var(--c-danger-bg);  color: var(--c-danger); }
+.badge-plan.sin-plan { color: var(--c-muted); }
+
+/* ── Error inline dentro del modal ── */
+.campo-error { color: var(--c-danger); font-weight: 500; }
+
+/* ── Celda de estado en la tabla (cargando / error / vacío) ── */
+.tabla-estado-celda {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+}
+
+/* ── Tarjeta "Mi restaurante" ── */
+.info-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  max-width: 520px;
+  box-shadow: var(--shadow-sm);
+}
+
+.info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.info-card-nombre {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -.4px;
+  flex: 1;
+}
+
+.info-card-body { display: flex; flex-direction: column; gap: 14px; }
+
+.info-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.info-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-muted);
+  min-width: 110px;
+}
+
+.info-value {
+  font-size: var(--text-sm);
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--c-text);
+}
+
+.info-link {
+  font-size: var(--text-sm);
+  color: var(--c-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.info-link:hover { text-decoration: underline; }
+
+/* ── Estados de carga ── */
+.cargando-vista {
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  padding: 48px 0;
+}
+
+.error-menu {
+  color: var(--c-danger);
+  font-size: var(--text-sm);
+  padding: 24px 0;
+}
+.tabla-estado-celda .error { color: var(--c-danger); }
+
+/* ============================================================
+   VISTA QR
+   ============================================================ */
+.qr-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  max-width: 660px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+}
+
+.qr-imagen-wrap {
+  flex-shrink: 0;
+}
+
+.qr-imagen {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius);
+  border: 1px solid var(--c-border);
+  display: block;
+  background: var(--c-bg);
+}
+
+.qr-imagen-placeholder {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius);
+  border: 2px dashed var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-muted);
+  font-size: var(--text-xs);
+}
+
+.qr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.qr-info h2 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -.4px;
+}
+
+.qr-info p {
+  font-size: var(--text-sm);
+  color: var(--c-muted);
+  line-height: 1.65;
+  max-width: 320px;
+}
+
+.qr-url-bloque {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qr-url-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.qr-url-texto {
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.75rem;
+  color: var(--c-text);
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.qr-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .qr-card {
+    flex-direction: column;
+    gap: 28px;
+    padding: 24px;
+  }
+  .qr-imagen, .qr-imagen-placeholder { width: 100%; height: auto; aspect-ratio: 1; }
+}
+
+/* ============================================================
+   RESPONSIVE GENERAL — pantallas angostas
+   ============================================================ */
+@media (max-width: 768px) {
+  :root { --sidebar-width: 200px; }
+  .content { padding: 20px 20px 40px; }
+  .topbar  { padding: 20px 20px 0; }
+}
+
+@media (max-width: 600px) {
+  .plato-fila { flex-wrap: wrap; gap: 8px; }
+  .plato-fila-acciones { width: 100%; justify-content: flex-end; }
+  .categoria-acciones { gap: 2px; }
+  .categoria-acciones .btn { padding: 5px 8px; font-size: var(--text-xs); }
+}

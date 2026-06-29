@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Panel de administración de comanda — gestión del menú y pedidos de tu restaurante." />
+  <meta name="description" content="Panel de administración de clik — gestión del menú y pedidos de tu restaurante." />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Panel — Comanda</title>
+  <title>Panel — clik</title>
   <link rel="stylesheet" href="css/styles.css" />
   <!-- Guard: redirige a login si no hay token antes de renderizar nada -->
   <script>
-    if (!localStorage.getItem('comanda_token')) {
+    if (!localStorage.getItem('clik_token')) {
       window.location.replace('login.html');
     }
   </script>
@@ -24,7 +24,7 @@
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-mark"></div>
-      <span class="logo-text">Comanda</span>
+      <span class="logo-text">clik</span>
     </div>
 
     <!-- Nombre del restaurante del dueño logueado, cargado por JS -->
@@ -157,10 +157,17 @@
     <form id="form-plato">
       <div class="modal-body">
 
-        <!-- Foto placeholder — aquí irá el input de imagen real -->
+        <!-- Foto del plato: clic en el preview para seleccionar archivo -->
         <div class="foto-upload-area">
           <div class="plato-foto-preview" id="plato-foto-preview"></div>
-          <span class="foto-upload-label">Subir foto &middot; próximamente</span>
+          <input
+            type="file"
+            id="campo-plato-imagen"
+            name="imagen"
+            accept="image/jpeg,image/png,image/webp"
+            class="campo-imagen-input"
+          />
+          <span class="foto-upload-label">Clic en la imagen para cambiar &middot; JPG, PNG o WebP &middot; máx. 5 MB</span>
         </div>
 
         <div class="campo">

@@ -9,11 +9,17 @@ interface Restaurant {
   id: number;
   nombre: string;
   slug: string;
+  activo: boolean;
+  plan_hasta: Date | null;
   created_at: Date;
 }
 
 // Error de pg para violación de unicidad (UNIQUE constraint)
 const PG_UNIQUE_VIOLATION = '23505';
+
+function esIdValido(id: string): boolean {
+  return /^\d+$/.test(id);
+}
 
 // GET /restaurants
 export async function listar(_req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -27,6 +33,9 @@ export async function obtener(
   res: ServerResponse,
   params: Record<string, string>
 ): Promise<void> {
+  if (!esIdValido(params.id)) {
+    return responderJSON(res, 400, { error: 'El id debe ser un entero positivo' });
+  }
   const restaurant = await queryOne<Restaurant>(
     'SELECT * FROM restaurants WHERE id = $1',
     [params.id]
@@ -45,14 +54,29 @@ export async function crear(req: IncomingMessage, res: ServerResponse): Promise<
   }
 
   const nombre = typeof body.nombre === 'string' ? body.nombre.trim() : '';
-  const slug = typeof body.slug === 'string' ? body.slug.trim() : '';
-  if (!nombre || !slug) {
-    return responderJSON(res, 400, { error: 'nombre y slug son requeridos' });
+  const slug   = typeof body.slug   === 'string' ? body.slug.trim()   : '';
+
+  if (!nombre) {
+    return responderJSON(res, 400, { error: 'nombre es requerido' });
+  }
+  if (nombre.length > 255) {
+    return responderJSON(res, 400, { error: 'nombre no puede superar 255 caracteres' });
+  }
+  if (!slug) {
+    return responderJSON(res, 400, { error: 'slug es requerido' });
+  }
+  if (!/^[a-z0-9-]+$/.test(slug)) {
+    return responderJSON(res, 400, { error: 'slug solo puede contener minúsculas, números y guiones' });
+  }
+  if (slug.length > 100) {
+    return responderJSON(res, 400, { error: 'slug no puede superar 100 caracteres' });
   }
 
   try {
     const nuevo = await queryOne<Restaurant>(
-      'INSERT INTO restaurants (nombre, slug) VALUES ($1, $2) RETURNING *',
+      `INSERT INTO restaurants (nombre, slug, activo, plan_hasta)
+       VALUES ($1, $2, true, NOW() + INTERVAL '30 days')
+       RETURNING *`,
       [nombre, slug]
     );
     responderJSON(res, 201, nuevo);
@@ -70,6 +94,9 @@ export async function actualizar(
   res: ServerResponse,
   params: Record<string, string>
 ): Promise<void> {
+  if (!esIdValido(params.id)) {
+    return responderJSON(res, 400, { error: 'El id debe ser un entero positivo' });
+  }
   const existente = await queryOne<Restaurant>(
     'SELECT * FROM restaurants WHERE id = $1',
     [params.id]
@@ -110,6 +137,9 @@ export async function eliminar(
   res: ServerResponse,
   params: Record<string, string>
 ): Promise<void> {
+  if (!esIdValido(params.id)) {
+    return responderJSON(res, 400, { error: 'El id debe ser un entero positivo' });
+  }
   const eliminado = await queryOne<Restaurant>(
     'DELETE FROM restaurants WHERE id = $1 RETURNING *',
     [params.id]

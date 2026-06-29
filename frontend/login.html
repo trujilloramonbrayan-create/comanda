@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión — clik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+
+  <a href="landing.html" class="auth-logo">clik</a>
+
+  <div class="auth-card">
+    <h1 class="auth-titulo">Bienvenido de vuelta</h1>
+    <p class="auth-subtitulo">Ingresá a tu panel de administración.</p>
+
+    <!-- Error de credenciales / servidor -->
+    <div class="auth-error" id="error-general" role="alert"></div>
+
+    <form id="form-login" novalidate>
+
+      <div class="campo">
+        <label for="campo-email">Correo electrónico</label>
+        <input
+          type="email"
+          id="campo-email"
+          name="email"
+          placeholder="vos@turestaurante.com"
+          autocomplete="email"
+        >
+        <span class="campo-error-msg" id="error-email"></span>
+      </div>
+
+      <div class="campo">
+        <label for="campo-password">Contraseña</label>
+        <input
+          type="password"
+          id="campo-password"
+          name="password"
+          placeholder="Tu contraseña"
+          autocomplete="current-password"
+        >
+        <span class="campo-error-msg" id="error-password"></span>
+      </div>
+
+      <button type="submit" class="btn-auth" id="btn-submit">
+        Iniciar sesión
+      </button>
+
+    </form>
+
+    <p class="auth-link">
+      ¿No tenés cuenta? <a href="register.html">Registrate gratis</a>
+    </p>
+  </div>
+
+  <script>
+    const esLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+      || /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(window.location.hostname);
+    const API_URL = esLocal ? `http://${window.location.hostname}:3000` : '';
+
+    function mostrarErrorCampo(id, mensaje) {
+      const el = document.getElementById(id);
+      el.textContent = mensaje;
+      el.classList.add('visible');
+      document.getElementById(id.replace('error-', 'campo-')).classList.add('invalido');
+    }
+
+    function limpiarErrores() {
+      ['error-email', 'error-password'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = '';
+        el.classList.remove('visible');
+      });
+      ['campo-email', 'campo-password'].forEach(id => {
+        document.getElementById(id).classList.remove('invalido');
+      });
+      const general = document.getElementById('error-general');
+      general.textContent = '';
+      general.classList.remove('visible');
+    }
+
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      limpiarErrores();
+
+      const email    = document.getElementById('campo-email').value.trim();
+      const password = document.getElementById('campo-password').value;
+
+      // Validación básica client-side
+      let hayErrores = false;
+      if (!email) {
+        mostrarErrorCampo('error-email', 'El email es requerido');
+        hayErrores = true;
+      }
+      if (!password) {
+        mostrarErrorCampo('error-password', 'La contraseña es requerida');
+        hayErrores = true;
+      }
+      if (hayErrores) return;
+
+      const btn = document.getElementById('btn-submit');
+      btn.disabled = true;
+      btn.textContent = 'Ingresando…';
+
+      try {
+        const respuesta = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+          const general = document.getElementById('error-general');
+          general.textContent = datos.error ?? 'Email o contraseña incorrectos';
+          general.classList.add('visible');
+          return;
+        }
+
+        // Éxito: guardar token y redirigir al panel
+        localStorage.setItem('clik_token', datos.token);
+        localStorage.setItem('clik_restaurant', JSON.stringify(datos.restaurant));
+        window.location.href = 'index.html';
+
+      } catch {
+        const general = document.getElementById('error-general');
+        general.textContent = 'No se pudo conectar con el servidor. ¿Está corriendo el backend?';
+        general.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Iniciar sesión';
+      }
+    });
+  </script>
+
+</body>
+</html>
