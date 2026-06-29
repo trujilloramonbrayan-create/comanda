@@ -12,6 +12,8 @@ import {
   crearPlato,     actualizarPlato,     eliminarPlato,    patchDisponible,
   subirImagenPlato,
 } from './menu.ts';
+import { crearPedido, listarPedidos, avanzarEstadoPedido } from './pedidos.ts';
+import { obtenerGanancias } from './ganancias.ts';
 
 // Ruta de salud
 registrar('GET', '/health', (_req, res) => {
@@ -24,7 +26,8 @@ registrar('POST', '/auth/register', register);
 registrar('POST', '/auth/login',    login);
 
 // Menú público — sin JWT, acceso libre para clientes del restaurante
-registrar('GET', '/r/:slug', menuPublico);
+registrar('GET',  '/r/:slug',         menuPublico);
+registrar('POST', '/r/:slug/pedidos', crearPedido);
 
 // Panel del dueño — todos requieren JWT
 registrar('GET',    '/mi-restaurante',    miRestaurante);
@@ -32,6 +35,10 @@ registrar('GET',    '/menu',              obtenerMenu);
 registrar('POST',   '/categorias',        crearCategoria);
 registrar('PUT',    '/categorias/:id',    actualizarCategoria);
 registrar('DELETE', '/categorias/:id',    eliminarCategoria);
+registrar('GET',    '/pedidos',           listarPedidos);
+registrar('PATCH',  '/pedidos/:id',       avanzarEstadoPedido);
+registrar('GET',    '/ganancias',         obtenerGanancias);
+
 registrar('POST',   '/platos',            crearPlato);
 registrar('POST',   '/platos/:id/imagen', subirImagenPlato);
 registrar('PUT',    '/platos/:id',        actualizarPlato);

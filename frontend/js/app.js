@@ -110,6 +110,7 @@ const estadoMenu = {
 const ctxCategoria = { modo: 'crear', catId: null };
 const ctxPlato     = { modo: 'crear', platoId: null, catId: null };
 
+
 // ─────────────────────────────────────────────────────────────
 // Navegación
 // ─────────────────────────────────────────────────────────────
@@ -129,23 +130,27 @@ function cambiarVista(nombre) {
   if (navItem) navItem.classList.add('activo');
 
   const titulos = {
-    menu:    'Menú',
-    qr:      'Mi QR',
-    pedidos: 'Pedidos',
-    mesas:   'Mesas',
+    menu:      'Menú',
+    qr:        'Mi QR',
+    pedidos:   'Pedidos',
+    ganancias: 'Ganancias',
   };
   document.getElementById('titulo-pagina').textContent = titulos[nombre] ?? nombre;
 
-  // btn-nuevo solo aparece en la vista menú
+  // btn-nuevo solo aparece en la vista de menú
   const btnNuevo = document.getElementById('btn-nuevo');
   if (nombre === 'menu') {
     btnNuevo.classList.remove('oculto');
+    btnNuevo.textContent = '+ Nueva categoría';
   } else {
     btnNuevo.classList.add('oculto');
   }
 
-  if (nombre === 'menu') cargarMenu();
-  if (nombre === 'qr')   cargarQR();
+  if (nombre === 'menu')      cargarMenu();
+  if (nombre === 'qr')        cargarQR();
+  if (nombre === 'ganancias') cargarGanancias();
+  if (nombre === 'pedidos')   { cargarPedidos(); iniciarAutoRefreshPedidos(); }
+  if (nombre !== 'pedidos')   detenerAutoRefreshPedidos();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -588,6 +593,235 @@ function inicializarEditorMenu() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Módulo de Ganancias
+// ─────────────────────────────────────────────────────────────
+
+function formatearCOP(n) {
+  return '$' + Number(n).toLocaleString('es-CO');
+}
+
+function formatearFechaCorta(fechaStr) {
+  // fechaStr viene como "2026-06-29" desde el backend (DATE en UTC)
+  const [anio, mes, dia] = fechaStr.split('-').map(Number);
+  const d = new Date(anio, mes - 1, dia);
+  return d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+async function cargarGanancias() {
+  const contenedor = document.getElementById('ganancias-contenido');
+  contenedor.innerHTML = '<div class="cargando-vista">Cargando ganancias…</div>';
+  try {
+    const datos = await llamarAPI('/ganancias');
+    renderizarGanancias(datos);
+  } catch (err) {
+    contenedor.innerHTML = `<div class="error-menu">Error: ${escaparHTML(err.message)}</div>`;
+  }
+}
+
+function renderizarGanancias({ hoy, mes, por_dia }) {
+  const contenedor = document.getElementById('ganancias-contenido');
+
+  const filaDias = por_dia.map(d => `
+    <tr class="ganancia-fila">
+      <td>${escaparHTML(formatearFechaCorta(d.fecha))}</td>
+      <td class="ganancia-td-num">${d.pedidos}</td>
+      <td class="ganancia-td-monto">${formatearCOP(d.total)}</td>
+    </tr>`).join('');
+
+  const pluralP = n => `${n} pedido${n !== 1 ? 's' : ''}`;
+
+  contenedor.innerHTML = `
+    <div class="ganancias-cards">
+      <div class="ganancia-card ganancia-hoy">
+        <p class="ganancia-label">Hoy</p>
+        <p class="ganancia-monto">${formatearCOP(hoy.total)}</p>
+        <p class="ganancia-sub">${pluralP(hoy.pedidos)} entregado${hoy.pedidos !== 1 ? 's' : ''}</p>
+      </div>
+      <div class="ganancia-card ganancia-mes">
+        <p class="ganancia-label">Este mes</p>
+        <p class="ganancia-monto">${formatearCOP(mes.total)}</p>
+        <p class="ganancia-sub">${pluralP(mes.pedidos)} entregado${mes.pedidos !== 1 ? 's' : ''}</p>
+      </div>
+    </div>
+
+    ${por_dia.length === 0
+      ? `<div class="empty-state">
+           <div class="empty-state-icon"></div>
+           <h3>Sin datos este mes</h3>
+           <p>Las ganancias aparecen acá cuando marcás pedidos como entregados.</p>
+         </div>`
+      : `<div class="ganancias-tabla-wrap">
+           <p class="ganancias-tabla-titulo">Detalle del mes</p>
+           <table class="ganancias-tabla">
+             <thead>
+               <tr>
+                 <th>Día</th>
+                 <th class="ganancia-td-num">Pedidos</th>
+                 <th class="ganancia-td-monto">Total</th>
+               </tr>
+             </thead>
+             <tbody>${filaDias}</tbody>
+           </table>
+         </div>`
+    }`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Módulo de Pedidos
+// ─────────────────────────────────────────────────────────────
+
+const estadoPedidos = {
+  lista:   [],
+  filtro:  'activos',  // 'activos' | 'listo' | 'todos'
+};
+
+let intervalPedidos = null;
+
+const ESTADO_LABEL = {
+  pendiente:      'Pendiente',
+  en_preparacion: 'En preparación',
+  listo:          'Listo',
+  entregado:      'Entregado',
+};
+
+const ESTADO_SIGUIENTE_LABEL = {
+  pendiente:      'Preparar',
+  en_preparacion: 'Listo',
+  listo:          'Entregar',
+};
+
+function tiempoRelativo(fechaStr) {
+  const min = Math.floor((Date.now() - new Date(fechaStr).getTime()) / 60_000);
+  if (min < 1)  return 'ahora mismo';
+  if (min < 60) return `hace ${min} min`;
+  return `hace ${Math.floor(min / 60)}h`;
+}
+
+function formatearPrecioCOP(n) {
+  return '$' + Number(n).toLocaleString('es-CO');
+}
+
+async function cargarPedidos() {
+  const contenedor = document.getElementById('lista-pedidos');
+  contenedor.innerHTML = '<div class="cargando-vista">Cargando pedidos…</div>';
+
+  const paramEstado = estadoPedidos.filtro === 'todos' ? '' : `?estado=${estadoPedidos.filtro}`;
+
+  try {
+    const pedidos = await llamarAPI(`/pedidos${paramEstado}`);
+    estadoPedidos.lista = pedidos;
+    renderizarPedidos();
+  } catch (err) {
+    contenedor.innerHTML = `<div class="error-menu">Error: ${escaparHTML(err.message)}</div>`;
+  }
+}
+
+function renderizarPedidos() {
+  const contenedor = document.getElementById('lista-pedidos');
+
+  if (estadoPedidos.lista.length === 0) {
+    const mensajes = {
+      activos: 'No hay pedidos activos en este momento.',
+      listo:   'No hay pedidos listos para entregar.',
+      todos:   'Todavía no recibiste pedidos.',
+    };
+    contenedor.innerHTML = `
+      <div class="empty-state" style="margin-top:0">
+        <div class="empty-state-icon"></div>
+        <h3>Sin pedidos</h3>
+        <p>${mensajes[estadoPedidos.filtro] ?? ''}</p>
+      </div>`;
+    return;
+  }
+
+  contenedor.innerHTML = estadoPedidos.lista.map(htmlPedidoCard).join('');
+}
+
+function htmlPedidoCard(pedido) {
+  const items = pedido.items ?? [];
+  const total = items.reduce((s, i) => s + i.precio_unitario * i.cantidad, 0);
+  const puedeAvanzar = pedido.estado !== 'entregado';
+
+  const itemsHTML = items.map(i => `
+    <li class="pedido-item-linea">
+      <span>${escaparHTML(String(i.cantidad))}× ${escaparHTML(i.nombre_plato)}</span>
+      <span class="pedido-item-precio">${formatearPrecioCOP(i.precio_unitario * i.cantidad)}</span>
+    </li>`).join('');
+
+  return `
+    <div class="pedido-card" data-pedido-id="${pedido.id}">
+      <div class="pedido-head">
+        <div class="pedido-meta">
+          <p class="pedido-mesa">Mesa ${escaparHTML(String(pedido.mesa_numero))}</p>
+          <p class="pedido-tiempo">${tiempoRelativo(pedido.created_at)}</p>
+        </div>
+        <span class="badge-estado badge-${pedido.estado}">
+          ${ESTADO_LABEL[pedido.estado] ?? pedido.estado}
+        </span>
+      </div>
+      <ul class="pedido-items-lista">${itemsHTML}</ul>
+      <div class="pedido-foot">
+        <span class="pedido-total">Total: ${formatearPrecioCOP(total)}</span>
+        ${puedeAvanzar ? `
+          <button class="btn btn-primary btn-avanzar-pedido" type="button">
+            ${ESTADO_SIGUIENTE_LABEL[pedido.estado] ?? '→'}
+          </button>` : `<span class="pedido-tiempo">Entregado</span>`}
+      </div>
+    </div>`;
+}
+
+async function avanzarEstadoPedido(pedidoId) {
+  try {
+    const actualizado = await llamarAPI(`/pedidos/${pedidoId}`, { method: 'PATCH' });
+    const idx = estadoPedidos.lista.findIndex(p => p.id == pedidoId);
+    if (idx !== -1) estadoPedidos.lista[idx].estado = actualizado.estado;
+
+    // Si el filtro activo ya no incluye este estado, quitarlo de la lista
+    if (estadoPedidos.filtro === 'activos' && actualizado.estado === 'listo') {
+      estadoPedidos.lista.splice(idx, 1);
+    } else if (estadoPedidos.filtro === 'listo' && actualizado.estado === 'entregado') {
+      estadoPedidos.lista.splice(idx, 1);
+    }
+
+    renderizarPedidos();
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+}
+
+function iniciarAutoRefreshPedidos() {
+  detenerAutoRefreshPedidos();
+  intervalPedidos = setInterval(cargarPedidos, 30_000);
+}
+
+function detenerAutoRefreshPedidos() {
+  if (intervalPedidos) { clearInterval(intervalPedidos); intervalPedidos = null; }
+}
+
+function inicializarEditorPedidos() {
+  // Delegación sobre la lista de pedidos
+  document.getElementById('lista-pedidos').addEventListener('click', e => {
+    const btnAvanzar = e.target.closest('.btn-avanzar-pedido');
+    if (!btnAvanzar) return;
+    const card = btnAvanzar.closest('.pedido-card');
+    if (card) avanzarEstadoPedido(card.dataset.pedidoId);
+  });
+
+  // Botón refrescar manual
+  document.getElementById('btn-refrescar-pedidos').addEventListener('click', cargarPedidos);
+
+  // Filtros
+  document.querySelectorAll('.filtro-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+      btn.classList.add('activo');
+      estadoPedidos.filtro = btn.dataset.filtro;
+      cargarPedidos();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // Inicialización principal
 // ─────────────────────────────────────────────────────────────
 
@@ -604,6 +838,7 @@ function init() {
   });
 
   inicializarEditorMenu();
+  inicializarEditorPedidos();
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();

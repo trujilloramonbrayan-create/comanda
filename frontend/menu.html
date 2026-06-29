@@ -40,6 +40,7 @@
       <p class="restaurante-subtitulo">Menú digital</p>
       <div class="hero-meta">
         <span class="badge-abierto">Abierto</span>
+        <span class="badge-mesa oculto" id="badge-mesa"></span>
       </div>
     </div>
   </header>
@@ -58,6 +59,57 @@
   </footer>
 
 </div><!-- /pagina -->
+
+<!-- Barra inferior del carrito — aparece cuando hay ítems en el carrito -->
+<div class="carrito-bar oculto" id="carrito-bar">
+  <button class="carrito-bar-btn" id="btn-abrir-carrito" type="button">
+    <span class="carrito-cant-badge" id="carrito-cant">0</span>
+    <span class="carrito-bar-label">Ver pedido</span>
+    <span id="carrito-bar-total">$0</span>
+  </button>
+</div>
+
+<!-- Drawer del carrito -->
+<div class="carrito-overlay oculto" id="carrito-overlay">
+  <div class="carrito-drawer" id="carrito-drawer">
+
+    <div class="carrito-head">
+      <button class="carrito-cerrar" id="btn-cerrar-carrito" type="button">✕</button>
+      <h3>Tu pedido</h3>
+      <div></div><!-- spacer para centrar el título -->
+    </div>
+
+    <!-- Número de mesa — campo principal antes de confirmar -->
+    <div class="carrito-mesa-bloque" id="carrito-mesa-bloque">
+      <label class="carrito-mesa-lbl" for="carrito-input-mesa">¿En qué mesa estás?</label>
+      <input
+        type="number"
+        id="carrito-input-mesa"
+        class="carrito-input-mesa"
+        placeholder="Número de mesa"
+        min="1"
+        max="9999"
+        inputmode="numeric"
+      />
+    </div>
+
+    <!-- Lista de ítems -->
+    <div class="carrito-items" id="carrito-items"></div>
+
+    <!-- Total + botón -->
+    <div class="carrito-foot">
+      <div class="carrito-total-row">
+        <span>Total</span>
+        <strong id="carrito-total-drawer">$0</strong>
+      </div>
+      <button class="btn-confirmar-pedido" id="btn-confirmar-pedido" type="button">
+        Confirmar pedido
+      </button>
+      <p class="carrito-error oculto" id="carrito-error"></p>
+    </div>
+
+  </div>
+</div>
 
 <script src="js/menu.js"></script>
 </body>

@@ -45,8 +45,8 @@
       <a href="#" class="nav-item" data-vista="pedidos">
         Pedidos
       </a>
-      <a href="#" class="nav-item" data-vista="mesas">
-        Mesas
+      <a href="#" class="nav-item" data-vista="ganancias">
+        Ganancias
       </a>
     </nav>
 
@@ -105,8 +105,25 @@
       <!-- ──────────────────────────────────
            VISTAS PENDIENTES
       ─────────────────────────────────── -->
-      <div id="vista-pedidos" class="oculto placeholder-view">Pedidos — próximamente</div>
-      <div id="vista-mesas"   class="oculto placeholder-view">Mesas — próximamente</div>
+      <!-- ──────────────────────────────────
+           VISTA: Pedidos
+      ─────────────────────────────────── -->
+      <div id="vista-pedidos" class="oculto">
+        <div class="pedidos-filtros">
+          <button class="btn btn-ghost filtro-btn activo" data-filtro="activos">Activos</button>
+          <button class="btn btn-ghost filtro-btn" data-filtro="listo">Listos</button>
+          <button class="btn btn-ghost filtro-btn" data-filtro="todos">Todos</button>
+          <button class="btn btn-secondary" id="btn-refrescar-pedidos">↺ Actualizar</button>
+        </div>
+        <div id="lista-pedidos"></div>
+      </div>
+
+      <!-- ──────────────────────────────────
+           VISTA: Ganancias
+      ─────────────────────────────────── -->
+      <div id="vista-ganancias" class="oculto">
+        <div id="ganancias-contenido"></div>
+      </div>
 
     </div><!-- /content -->
   </main><!-- /main -->
@@ -219,6 +236,7 @@
     </form>
   </div>
 </div>
+
 
 <script src="js/app.js"></script>
 </body>
