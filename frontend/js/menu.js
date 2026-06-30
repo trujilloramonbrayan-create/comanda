@@ -132,6 +132,12 @@ let mesaActual = null;
 // Slug del restaurante — necesario para POST /r/:slug/pedidos
 let slugRestaurante = null;
 
+// Si el restaurante tiene MP configurado
+let tieneMP = false;
+
+// Método elegido por el cliente: 'efectivo' | 'mp'
+let metodoPago = 'efectivo';
+
 // Carrito: Map<platoId, { nombre, precio, cantidad }>
 const carrito = new Map();
 
@@ -273,7 +279,7 @@ async function confirmarPedido() {
     const res = await fetch(`${API_URL}/r/${encodeURIComponent(slugRestaurante)}/pedidos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mesa_numero: mesaActual, items }),
+      body: JSON.stringify({ mesa_numero: mesaActual, items, metodo_pago: metodoPago }),
     });
 
     if (!res.ok) {
@@ -281,7 +287,17 @@ async function confirmarPedido() {
       throw new Error(datos.error ?? `Error ${res.status}`);
     }
 
-    // Éxito — limpiar carrito y mostrar pantalla de confirmación
+    const datos = await res.json();
+
+    // Si el restaurante eligió pagar con MP, redirigir al checkout
+    if (datos.checkout_url) {
+      carrito.clear();
+      actualizarBarraCarrito();
+      window.location.href = datos.checkout_url;
+      return;
+    }
+
+    // Pago en local — mostrar confirmación
     const mesaConfirmada = mesaActual;
     carrito.clear();
     actualizarBarraCarrito();
@@ -323,6 +339,17 @@ function inicializarCarrito() {
     cambiarCantidad(platoId, btn.dataset.accion === 'mas' ? 1 : -1);
   });
 
+  // Selector de método de pago
+  document.getElementById('carrito-pago').addEventListener('click', e => {
+    const btn = e.target.closest('.carrito-pago-btn');
+    if (!btn) return;
+    metodoPago = btn.dataset.metodo;
+    document.querySelectorAll('.carrito-pago-btn').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById('btn-confirmar-pedido').textContent =
+      metodoPago === 'mp' ? 'Pagar con Mercado Pago' : 'Confirmar pedido';
+  });
+
   // Delegación de eventos para botones en las tarjetas del menú
   document.getElementById('menu-body').addEventListener('click', e => {
     // Botón "Agregar"
@@ -353,6 +380,12 @@ function inicializarCarrito() {
 
 function renderizarMenu(datos) {
   const { restaurante, categorias } = datos;
+
+  // Si el restaurante tiene MP, mostrar el selector de método de pago
+  tieneMP = !!restaurante.tiene_mp;
+  if (tieneMP) {
+    document.getElementById('carrito-pago').classList.remove('oculto');
+  }
 
   // Título de pestaña y meta description
   document.title = `${restaurante.nombre} — Menú`;
@@ -497,6 +530,7 @@ async function cargarMenu() {
     }
 
     renderizarMenu(datos);
+    mostrarToastPago();
 
   } catch {
     mostrarMensaje(
@@ -504,6 +538,24 @@ async function cargarMenu() {
       'Verificá tu conexión a internet e intentá de nuevo.'
     );
   }
+}
+
+function mostrarToastPago() {
+  const pago = new URLSearchParams(window.location.search).get('pago');
+  if (!pago) return;
+
+  window.history.replaceState({}, '', window.location.pathname + `?slug=${slugRestaurante}`);
+
+  const toast = document.getElementById('toast-pago');
+  if (pago === 'ok') {
+    toast.textContent = '✓ ¡Pago recibido! Tu pedido está en camino.';
+    toast.className = 'toast-pago toast-pago--ok';
+  } else {
+    toast.textContent = 'El pago no se completó. Podés intentarlo de nuevo o pagar en local.';
+    toast.className = 'toast-pago toast-pago--error';
+  }
+  toast.classList.remove('oculto');
+  setTimeout(() => toast.classList.add('oculto'), 6000);
 }
 
 cargarMenu();

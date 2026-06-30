@@ -1198,6 +1198,69 @@ input, textarea { font-family: inherit; }
 }
 
 /* ============================================================
+   MERCADO PAGO — vista cobros
+   ============================================================ */
+.mp-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  max-width: 560px;
+}
+
+.mp-icono {
+  font-size: 2.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mp-info h2 { margin: 0 0 8px; font-size: var(--text-xl); }
+.mp-info p  { color: var(--c-muted); margin: 0 0 20px; line-height: 1.55; }
+
+.mp-estado {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+.mp-estado--desconectado { color: var(--c-muted); }
+.mp-estado--conectado    { color: #16a34a; }
+
+.mp-user-id { margin: -10px 0 14px; }
+
+.btn-peligro {
+  color: var(--c-danger);
+  border-color: var(--c-danger);
+}
+.btn-peligro:hover {
+  background: var(--c-danger-bg);
+}
+
+.mp-aviso {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  margin-top: 16px;
+}
+.mp-aviso--ok    { background: #f0fdf4; color: #15803d; }
+.mp-aviso--error { background: var(--c-danger-bg); color: var(--c-danger); }
+
+/* Badges en la lista de pedidos */
+.pedido-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* ============================================================
    RESPONSIVE GENERAL — pantallas angostas
    ============================================================ */
 @media (max-width: 768px) {

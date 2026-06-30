@@ -672,6 +672,66 @@ body {
   color: #64748b;
 }
 
+/* Selector método de pago */
+.carrito-pago {
+  padding: 12px 0 4px;
+}
+
+.carrito-pago-lbl {
+  font-size: .8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+
+.carrito-pago-opciones {
+  display: flex;
+  gap: 8px;
+}
+
+.carrito-pago-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #334155;
+  transition: border-color .15s, background .15s, color .15s;
+}
+
+.carrito-pago-btn.activo {
+  border-color: var(--c-accent);
+  background: #fff8eb;
+  color: #92400e;
+}
+
+/* Toast de resultado de pago MP */
+.toast-pago {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: .92rem;
+  font-weight: 600;
+  max-width: 88vw;
+  text-align: center;
+  z-index: 200;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  animation: fadein .3s ease;
+}
+
+.toast-pago--ok    { background: #dcfce7; color: #15803d; }
+.toast-pago--error { background: #fef2f2; color: #dc2626; }
+
+@keyframes fadein { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
 /* ============================================================
    UTILIDADES
    ============================================================ */

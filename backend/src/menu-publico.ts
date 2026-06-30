@@ -80,10 +80,17 @@ export async function menuPublico(
     }))
     .filter(cat => cat.platos.length > 0);
 
+  // Informar si el restaurante tiene MP configurado para mostrar u ocultar esa opción de pago
+  const tieneMP = await queryOne(
+    'SELECT 1 FROM mp_credentials WHERE restaurant_id = $1',
+    [restaurante.id]
+  );
+
   return responderJSON(res, 200, {
     restaurante: {
-      nombre: restaurante.nombre,
-      slug: restaurante.slug,
+      nombre:  restaurante.nombre,
+      slug:    restaurante.slug,
+      tiene_mp: !!tieneMP,
     },
     categorias: categoriasConPlatos,
   });

@@ -132,6 +132,7 @@ function cambiarVista(nombre) {
   const titulos = {
     menu:      'Menú',
     qr:        'Mi QR',
+    cobros:    'Mercado Pago',
     pedidos:   'Pedidos',
     ganancias: 'Ganancias',
   };
@@ -148,6 +149,7 @@ function cambiarVista(nombre) {
 
   if (nombre === 'menu')      cargarMenu();
   if (nombre === 'qr')        cargarQR();
+  if (nombre === 'cobros')    cargarEstadoMP();
   if (nombre === 'ganancias') cargarGanancias();
   if (nombre === 'pedidos')   { cargarPedidos(); iniciarAutoRefreshPedidos(); }
   if (nombre !== 'pedidos')   detenerAutoRefreshPedidos();
@@ -838,6 +840,74 @@ function inicializarEditorPedidos() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Vista Mercado Pago
+// ─────────────────────────────────────────────────────────────
+
+async function cargarEstadoMP() {
+  const elDesco   = document.getElementById('mp-estado-desconectado');
+  const elConec   = document.getElementById('mp-estado-conectado');
+  const elUserId  = document.getElementById('mp-user-id');
+  const elOk      = document.getElementById('mp-mensaje-ok');
+  const elError   = document.getElementById('mp-mensaje-error');
+
+  // Mostrar el toast si venimos del callback OAuth
+  const urlParams = new URLSearchParams(window.location.search);
+  const mp = urlParams.get('mp');
+  if (mp === 'ok') {
+    elOk.classList.remove('oculto');
+    // Limpiar el param de la URL sin recargar
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (mp === 'error') {
+    elError.classList.remove('oculto');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  try {
+    const data = await llamarAPI('/mp/estado');
+    if (data.conectado) {
+      elDesco.classList.add('oculto');
+      elConec.classList.remove('oculto');
+      elUserId.textContent = `ID de cuenta MP: ${data.mp_user_id}`;
+    } else {
+      elConec.classList.add('oculto');
+      elDesco.classList.remove('oculto');
+    }
+  } catch {
+    // Si falla no mostramos nada crítico, el botón sigue disponible
+  }
+}
+
+async function conectarMP() {
+  try {
+    const data = await llamarAPI('/auth/mp');
+    window.location.href = data.url;
+  } catch (err) {
+    alert('No se pudo iniciar la conexión con Mercado Pago.');
+  }
+}
+
+async function desconectarMPConfirmar() {
+  if (!confirm('¿Desconectar la cuenta de Mercado Pago? Los pagos en línea quedarán deshabilitados.')) return;
+  try {
+    await llamarAPI('/mp/desconectar', { method: 'DELETE' });
+    cargarEstadoMP();
+  } catch (err) {
+    alert('Error al desconectar: ' + err.message);
+  }
+}
+
+function inicializarCobros() {
+  document.getElementById('btn-mp-conectar').addEventListener('click', conectarMP);
+  document.getElementById('btn-mp-desconectar').addEventListener('click', desconectarMPConfirmar);
+
+  // Si el panel se cargó luego del callback de OAuth, ir directo a la vista cobros
+  const mp = new URLSearchParams(window.location.search).get('mp');
+  if (mp === 'ok' || mp === 'error') {
+    cambiarVista('cobros');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Inicialización principal
 // ─────────────────────────────────────────────────────────────
 
@@ -855,6 +925,7 @@ function init() {
 
   inicializarEditorMenu();
   inicializarEditorPedidos();
+  inicializarCobros();
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();

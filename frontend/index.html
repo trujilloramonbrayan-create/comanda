@@ -39,6 +39,11 @@
       <a href="#" class="nav-item" data-vista="qr">
         Mi QR
       </a>
+      <span class="nav-section">Configuración</span>
+      <a href="#" class="nav-item" data-vista="cobros">
+        Mercado Pago
+      </a>
+
       <span class="nav-section">Operación</span>
 
       <a href="#" class="nav-item" data-vista="pedidos">
@@ -102,8 +107,46 @@
       </div>
 
       <!-- ──────────────────────────────────
-           VISTAS PENDIENTES
+           VISTA: Mercado Pago / Cobros
       ─────────────────────────────────── -->
+      <div id="vista-cobros" class="oculto">
+        <div class="mp-card">
+          <div class="mp-icono">💳</div>
+          <div class="mp-info">
+            <h2>Mercado Pago</h2>
+            <p>
+              Conectá tu cuenta de Mercado Pago para que tus clientes puedan
+              pagar en línea desde el menú. La plata va directo a tu cuenta;
+              clik no toca ningún pago.
+            </p>
+
+            <!-- Estado: desconectado -->
+            <div id="mp-estado-desconectado">
+              <p class="mp-estado mp-estado--desconectado">No conectado</p>
+              <button class="btn btn-primary" id="btn-mp-conectar">
+                Conectar cuenta de Mercado Pago
+              </button>
+            </div>
+
+            <!-- Estado: conectado -->
+            <div id="mp-estado-conectado" class="oculto">
+              <p class="mp-estado mp-estado--conectado">✓ Cuenta conectada</p>
+              <p class="mp-user-id hint" id="mp-user-id"></p>
+              <button class="btn btn-secondary btn-peligro" id="btn-mp-desconectar">
+                Desconectar
+              </button>
+            </div>
+
+            <p id="mp-mensaje-ok" class="mp-aviso mp-aviso--ok oculto">
+              ¡Cuenta conectada con éxito! Tus clientes ya pueden pagar con Mercado Pago.
+            </p>
+            <p id="mp-mensaje-error" class="mp-aviso mp-aviso--error oculto">
+              Hubo un problema al conectar la cuenta. Intentá de nuevo.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <!-- ──────────────────────────────────
            VISTA: Pedidos
       ─────────────────────────────────── -->

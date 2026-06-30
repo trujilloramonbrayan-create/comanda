@@ -15,9 +15,12 @@ function requerirEnv(nombre: string): string {
 }
 
 export const config = {
-  port: parseInt(process.env.PORT ?? '3000', 10),
-  databaseUrl: requerirEnv('DATABASE_URL'),
-  jwtSecret: requerirEnv('JWT_SECRET'),
-  supabaseUrl: requerirEnv('SUPABASE_URL'),
+  port:               parseInt(process.env.PORT ?? '3000', 10),
+  databaseUrl:        requerirEnv('DATABASE_URL'),
+  jwtSecret:          requerirEnv('JWT_SECRET'),
+  supabaseUrl:        requerirEnv('SUPABASE_URL'),
   supabaseServiceKey: requerirEnv('SUPABASE_SERVICE_ROLE_KEY'),
+  mpClientId:         requerirEnv('MP_CLIENT_ID'),
+  mpClientSecret:     requerirEnv('MP_CLIENT_SECRET'),
+  appUrl:             requerirEnv('APP_URL'),
 };

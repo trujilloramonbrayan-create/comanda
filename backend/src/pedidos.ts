@@ -7,6 +7,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { query, queryOne } from './db.ts';
 import { responderJSON, leerCuerpo } from './utils.ts';
 import { verificarToken } from './auth.ts';
+import { crearPreferenciaMP } from './mp.ts';
 
 // ── Tipos internos ────────────────────────────────────────────────────────────
 
@@ -16,8 +17,9 @@ interface ItemBody {
 }
 
 interface PedidoBody {
-  mesa_numero: unknown;
-  items:       unknown;
+  mesa_numero:  unknown;
+  items:        unknown;
+  metodo_pago?: unknown;
 }
 
 // ── Crear pedido (público) ────────────────────────────────────────────────────
@@ -72,11 +74,13 @@ export async function crearPedido(
     return;
   }
 
+  const metodoPago = body.metodo_pago === 'mp' ? 'mp' : 'efectivo';
+
   const pedido = await queryOne<{ id: number; estado: string; created_at: string }>(
-    `INSERT INTO pedidos (restaurant_id, mesa_numero)
-     VALUES ($1, $2)
+    `INSERT INTO pedidos (restaurant_id, mesa_numero, metodo_pago)
+     VALUES ($1, $2, $3)
      RETURNING id, estado, created_at`,
-    [restaurante.id, mesaNumero]
+    [restaurante.id, mesaNumero, metodoPago]
   );
 
   const platoMap = new Map(platos.map(p => [p.id, p]));
@@ -90,7 +94,56 @@ export async function crearPedido(
     );
   }
 
-  responderJSON(res, 201, pedido);
+  // Pedido en efectivo → listo, flujo actual sin cambios
+  if (metodoPago === 'efectivo') {
+    responderJSON(res, 201, { ...pedido, metodo_pago: 'efectivo' });
+    return;
+  }
+
+  // Pedido con MP → crear preferencia de pago y devolver URL de checkout
+  const creds = await queryOne<{ access_token: string }>(
+    'SELECT access_token FROM mp_credentials WHERE restaurant_id = $1',
+    [restaurante.id]
+  );
+  if (!creds) {
+    // Si el restaurante no tiene MP configurado, cancelar el pedido y avisar
+    await query('DELETE FROM pedidos WHERE id = $1', [pedido!.id]);
+    responderJSON(res, 400, { error: 'Este restaurante no tiene Mercado Pago configurado' });
+    return;
+  }
+
+  const rest = await queryOne<{ nombre: string; slug: string }>(
+    'SELECT nombre, slug FROM restaurants WHERE id = $1',
+    [restaurante.id]
+  );
+
+  try {
+    const mpItems = items.map(item => {
+      const plato = platoMap.get(Number(item.plato_id))!;
+      return { title: plato.nombre, quantity: Number(item.cantidad), unit_price: plato.precio };
+    });
+
+    const { preference_id, checkout_url } = await crearPreferenciaMP({
+      accessToken:      creds.access_token,
+      restaurantNombre: rest!.nombre,
+      restaurantId:     restaurante.id,
+      pedidoId:         pedido!.id,
+      slug:             rest!.slug,
+      items:            mpItems,
+    });
+
+    await query(
+      'UPDATE pedidos SET mp_preference_id = $1 WHERE id = $2',
+      [preference_id, pedido!.id]
+    );
+
+    responderJSON(res, 201, { ...pedido, metodo_pago: 'mp', checkout_url });
+  } catch (err: unknown) {
+    // Si falla la creación de la preferencia, eliminar el pedido huérfano
+    await query('DELETE FROM pedidos WHERE id = $1', [pedido!.id]);
+    console.error('Error creando preferencia MP:', err);
+    responderJSON(res, 502, { error: 'No se pudo iniciar el pago con Mercado Pago' });
+  }
 }
 
 // ── Listar pedidos (protegido) ────────────────────────────────────────────────
@@ -112,7 +165,8 @@ export async function listarPedidos(
   } else if (estado === 'listo') {
     condicion = `AND p.estado = 'listo'`;
   }
-  // sin filtro → devuelve todos (limit 200, últimos primero)
+  // Excluir pedidos MP que aún no fueron pagados (sin mp_payment_id)
+  condicion += ` AND (p.metodo_pago = 'efectivo' OR p.mp_payment_id IS NOT NULL)`;
 
   const pedidos = await query(
     `SELECT

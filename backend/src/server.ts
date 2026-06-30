@@ -14,6 +14,7 @@ import {
 } from './menu.ts';
 import { crearPedido, listarPedidos, avanzarEstadoPedido } from './pedidos.ts';
 import { obtenerGanancias } from './ganancias.ts';
+import { iniciarOAuthMP, callbackOAuthMP, estadoMP, desconectarMP, webhookMP } from './mp.ts';
 
 // Ruta de salud
 registrar('GET', '/health', (_req, res) => {
@@ -29,6 +30,11 @@ registrar('POST', '/auth/login',    login);
 registrar('GET',  '/r/:slug',         menuPublico);
 registrar('POST', '/r/:slug/pedidos', crearPedido);
 
+// Mercado Pago — OAuth callback sin JWT (viene del navegador desde MP)
+registrar('GET',    '/auth/mp/callback', callbackOAuthMP);
+// Webhook MP sin JWT (viene de los servidores de MP)
+registrar('POST',   '/mp/webhook',       webhookMP);
+
 // Panel del dueño — todos requieren JWT
 registrar('GET',    '/mi-restaurante',    miRestaurante);
 registrar('GET',    '/menu',              obtenerMenu);
@@ -38,6 +44,9 @@ registrar('DELETE', '/categorias/:id',    eliminarCategoria);
 registrar('GET',    '/pedidos',           listarPedidos);
 registrar('PATCH',  '/pedidos/:id',       avanzarEstadoPedido);
 registrar('GET',    '/ganancias',         obtenerGanancias);
+registrar('GET',    '/auth/mp',           iniciarOAuthMP);
+registrar('GET',    '/mp/estado',         estadoMP);
+registrar('DELETE', '/mp/desconectar',    desconectarMP);
 
 registrar('POST',   '/platos',            crearPlato);
 registrar('POST',   '/platos/:id/imagen', subirImagenPlato);
