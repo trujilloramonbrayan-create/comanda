@@ -13,7 +13,6 @@ import {
   subirImagenPlato,
 } from './menu.ts';
 import { crearPedido, listarPedidos, avanzarEstadoPedido } from './pedidos.ts';
-import { listarMesas, crearMesa, toggleActivaMesa, eliminarMesa } from './mesas.ts';
 import { obtenerGanancias } from './ganancias.ts';
 
 // Ruta de salud
@@ -39,11 +38,6 @@ registrar('DELETE', '/categorias/:id',    eliminarCategoria);
 registrar('GET',    '/pedidos',           listarPedidos);
 registrar('PATCH',  '/pedidos/:id',       avanzarEstadoPedido);
 registrar('GET',    '/ganancias',         obtenerGanancias);
-
-registrar('GET',    '/mesas',             listarMesas);
-registrar('POST',   '/mesas',             crearMesa);
-registrar('PATCH',  '/mesas/:id',         toggleActivaMesa);
-registrar('DELETE', '/mesas/:id',         eliminarMesa);
 
 registrar('POST',   '/platos',            crearPlato);
 registrar('POST',   '/platos/:id/imagen', subirImagenPlato);

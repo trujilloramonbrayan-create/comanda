@@ -1198,54 +1198,6 @@ input, textarea { font-family: inherit; }
 }
 
 /* ============================================================
-   MESAS
-   ============================================================ */
-.mesas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
-}
-
-.mesa-card {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-lg);
-  padding: 20px 12px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  box-shadow: var(--shadow);
-  transition: opacity .2s;
-}
-
-.mesa-card.inactiva { opacity: .5; }
-
-.mesa-numero {
-  font-size: 2.2rem;
-  font-weight: 800;
-  letter-spacing: -.05em;
-  line-height: 1;
-  color: var(--c-text);
-}
-
-.mesa-badge {
-  font-size: var(--text-xs);
-  font-weight: 600;
-  padding: 2px 10px;
-  border-radius: 99px;
-}
-.mesa-badge.activa   { background: rgba(16,185,129,.1); color: #059669; }
-.mesa-badge.inactiva { background: var(--c-border); color: var(--c-muted); }
-
-.mesa-acciones {
-  display: flex;
-  gap: 4px;
-  width: 100%;
-  justify-content: center;
-}
-
-/* ============================================================
    RESPONSIVE GENERAL — pantallas angostas
    ============================================================ */
 @media (max-width: 768px) {

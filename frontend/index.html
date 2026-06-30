@@ -39,10 +39,6 @@
       <a href="#" class="nav-item" data-vista="qr">
         Mi QR
       </a>
-      <a href="#" class="nav-item" data-vista="mesas">
-        Mesas
-      </a>
-
       <span class="nav-section">Operación</span>
 
       <a href="#" class="nav-item" data-vista="pedidos">
@@ -128,12 +124,6 @@
         <div id="ganancias-contenido"></div>
       </div>
 
-      <!-- ──────────────────────────────────
-           VISTA: Mesas
-      ─────────────────────────────────── -->
-      <div id="vista-mesas" class="oculto">
-        <div id="mesas-contenido"></div>
-      </div>
 
     </div><!-- /content -->
   </main><!-- /main -->
@@ -247,41 +237,6 @@
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════
-     MODAL — Nueva mesa
-══════════════════════════════════════════ -->
-<div class="modal-overlay oculto" id="modal-mesa">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>Nueva mesa</h2>
-      <button class="modal-close" id="btn-cerrar-mesa">&#x2715;</button>
-    </div>
-    <form id="form-mesa">
-      <div class="modal-body">
-        <div class="campo">
-          <label for="campo-mesa-numero">Número de mesa</label>
-          <input
-            type="number"
-            id="campo-mesa-numero"
-            name="numero"
-            placeholder="Ej: 5"
-            min="1"
-            max="9999"
-            inputmode="numeric"
-            required
-          />
-          <p class="hint">Entre 1 y 9999. Cada número debe ser único.</p>
-        </div>
-        <p class="hint campo-error oculto" id="modal-mesa-error"></p>
-      </div>
-      <div class="modal-foot">
-        <button type="button" class="btn btn-secondary" id="btn-cancelar-mesa">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script src="js/app.js"></script>
 </body>
