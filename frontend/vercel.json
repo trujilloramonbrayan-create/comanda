@@ -1,17 +1,17 @@
 {
   "rewrites": [
-    { "source": "/health",            "destination": "REEMPLAZAR_CON_URL_RENDER/health" },
-    { "source": "/auth/:path*",       "destination": "REEMPLAZAR_CON_URL_RENDER/auth/:path*" },
-    { "source": "/r/:path*",          "destination": "REEMPLAZAR_CON_URL_RENDER/r/:path*" },
-    { "source": "/mi-restaurante",    "destination": "REEMPLAZAR_CON_URL_RENDER/mi-restaurante" },
-    { "source": "/menu",              "destination": "REEMPLAZAR_CON_URL_RENDER/menu" },
-    { "source": "/categorias/:path*", "destination": "REEMPLAZAR_CON_URL_RENDER/categorias/:path*" },
-    { "source": "/categorias",        "destination": "REEMPLAZAR_CON_URL_RENDER/categorias" },
-    { "source": "/platos/:path*",     "destination": "REEMPLAZAR_CON_URL_RENDER/platos/:path*" },
-    { "source": "/platos",            "destination": "REEMPLAZAR_CON_URL_RENDER/platos" },
-    { "source": "/pedidos/:path*",    "destination": "REEMPLAZAR_CON_URL_RENDER/pedidos/:path*" },
-    { "source": "/pedidos",           "destination": "REEMPLAZAR_CON_URL_RENDER/pedidos" },
-    { "source": "/ganancias",         "destination": "REEMPLAZAR_CON_URL_RENDER/ganancias" },
-    { "source": "/mp/:path*",         "destination": "REEMPLAZAR_CON_URL_RENDER/mp/:path*" }
+    { "source": "/health",            "destination": "https://comanda-g891.onrender.com/health" },
+    { "source": "/auth/:path*",       "destination": "https://comanda-g891.onrender.com/auth/:path*" },
+    { "source": "/r/:path*",          "destination": "https://comanda-g891.onrender.com/r/:path*" },
+    { "source": "/mi-restaurante",    "destination": "https://comanda-g891.onrender.com/mi-restaurante" },
+    { "source": "/menu",              "destination": "https://comanda-g891.onrender.com/menu" },
+    { "source": "/categorias/:path*", "destination": "https://comanda-g891.onrender.com/categorias/:path*" },
+    { "source": "/categorias",        "destination": "https://comanda-g891.onrender.com/categorias" },
+    { "source": "/platos/:path*",     "destination": "https://comanda-g891.onrender.com/platos/:path*" },
+    { "source": "/platos",            "destination": "https://comanda-g891.onrender.com/platos" },
+    { "source": "/pedidos/:path*",    "destination": "https://comanda-g891.onrender.com/pedidos/:path*" },
+    { "source": "/pedidos",           "destination": "https://comanda-g891.onrender.com/pedidos" },
+    { "source": "/ganancias",         "destination": "https://comanda-g891.onrender.com/ganancias" },
+    { "source": "/mp/:path*",         "destination": "https://comanda-g891.onrender.com/mp/:path*" }
   ]
 }
