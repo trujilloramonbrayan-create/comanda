@@ -1,0 +1,17 @@
+{
+  "rewrites": [
+    { "source": "/health",            "destination": "REEMPLAZAR_CON_URL_RENDER/health" },
+    { "source": "/auth/:path*",       "destination": "REEMPLAZAR_CON_URL_RENDER/auth/:path*" },
+    { "source": "/r/:path*",          "destination": "REEMPLAZAR_CON_URL_RENDER/r/:path*" },
+    { "source": "/mi-restaurante",    "destination": "REEMPLAZAR_CON_URL_RENDER/mi-restaurante" },
+    { "source": "/menu",              "destination": "REEMPLAZAR_CON_URL_RENDER/menu" },
+    { "source": "/categorias/:path*", "destination": "REEMPLAZAR_CON_URL_RENDER/categorias/:path*" },
+    { "source": "/categorias",        "destination": "REEMPLAZAR_CON_URL_RENDER/categorias" },
+    { "source": "/platos/:path*",     "destination": "REEMPLAZAR_CON_URL_RENDER/platos/:path*" },
+    { "source": "/platos",            "destination": "REEMPLAZAR_CON_URL_RENDER/platos" },
+    { "source": "/pedidos/:path*",    "destination": "REEMPLAZAR_CON_URL_RENDER/pedidos/:path*" },
+    { "source": "/pedidos",           "destination": "REEMPLAZAR_CON_URL_RENDER/pedidos" },
+    { "source": "/ganancias",         "destination": "REEMPLAZAR_CON_URL_RENDER/ganancias" },
+    { "source": "/mp/:path*",         "destination": "REEMPLAZAR_CON_URL_RENDER/mp/:path*" }
+  ]
+}
