@@ -151,8 +151,7 @@ function cambiarVista(nombre) {
   if (nombre === 'qr')        cargarQR();
   if (nombre === 'cobros')    cargarCobros();
   if (nombre === 'ganancias') cargarGanancias();
-  if (nombre === 'pedidos')   { cargarPedidos(); iniciarAutoRefreshPedidos(); }
-  if (nombre !== 'pedidos')   detenerAutoRefreshPedidos();
+  if (nombre === 'pedidos')   { actualizarBadgePedidos(0); cargarPedidos(); }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -685,6 +684,81 @@ function renderizarGanancias({ hoy, mes, por_dia }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Alertas sonoras y badge de pedidos nuevos
+// ─────────────────────────────────────────────────────────────
+
+const idsConocidosPedidos = new Set();  // IDs ya vistos; evita alertar dos veces
+let pedidosInicializados  = false;      // true después del primer poll (no alertar en la carga inicial)
+let audioCtx = null;
+
+// Crea (o reutiliza) el AudioContext. Debe llamarse tras interacción del usuario.
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new AudioContext(); } catch { return null; }
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Dos pitidos cortos a 880 Hz — tono neutro y claramente audible en una cocina.
+function sonarAlerta() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  [0, 0.22].forEach(t => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0,    ctx.currentTime + t);
+    gain.gain.linearRampToValueAtTime(0.3,   ctx.currentTime + t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.18);
+    osc.start(ctx.currentTime + t);
+    osc.stop(ctx.currentTime + t + 0.2);
+  });
+}
+
+// Actualiza el badge rojo en el nav. n = 0 lo oculta.
+function actualizarBadgePedidos(n) {
+  const badge = document.getElementById('badge-pedidos');
+  if (n > 0) {
+    badge.textContent = n > 9 ? '9+' : String(n);
+    badge.classList.remove('oculto');
+  } else {
+    badge.classList.add('oculto');
+  }
+}
+
+// Corre siempre (desde init), cada 30 s.
+// Detecta pedidos nuevos → suena + actualiza badge.
+// Si el dueño ya está en la vista de pedidos, refresca la lista en silencio.
+async function pollPedidos() {
+  try {
+    const pedidos = await llamarAPI('/pedidos?estado=activos');
+
+    const nuevos = pedidosInicializados
+      ? pedidos.filter(p => !idsConocidosPedidos.has(p.id))
+      : [];
+    pedidos.forEach(p => idsConocidosPedidos.add(p.id));
+    pedidosInicializados = true;
+
+    if (nuevos.length > 0) sonarAlerta();
+
+    // Badge = total de pedidos en estado 'pendiente' (los que aún no se empezaron a preparar)
+    const pendientes = pedidos.filter(p => p.estado === 'pendiente').length;
+    // Solo mostrarlo cuando el dueño NO está mirando la vista de pedidos
+    actualizarBadgePedidos(estado.vistaActual === 'pedidos' ? 0 : pendientes);
+
+    // Refrescar la lista si el dueño tiene la vista pedidos abierta con filtro activos
+    if (estado.vistaActual === 'pedidos' && estadoPedidos.filtro === 'activos') {
+      estadoPedidos.lista = pedidos;
+      renderizarPedidos();
+    }
+  } catch { /* silencioso: no interrumpir al dueño si falla una consulta de fondo */ }
+}
+
+// ─────────────────────────────────────────────────────────────
 // Módulo de Pedidos
 // ─────────────────────────────────────────────────────────────
 
@@ -692,8 +766,6 @@ const estadoPedidos = {
   lista:   [],
   filtro:  'activos',  // 'activos' | 'listo' | 'todos'
 };
-
-let intervalPedidos = null;
 
 const ESTADO_LABEL = {
   pendiente:      'Pendiente',
@@ -807,15 +879,6 @@ async function avanzarEstadoPedido(pedidoId) {
   }
 }
 
-function iniciarAutoRefreshPedidos() {
-  detenerAutoRefreshPedidos();
-  intervalPedidos = setInterval(cargarPedidos, 30_000);
-}
-
-function detenerAutoRefreshPedidos() {
-  if (intervalPedidos) { clearInterval(intervalPedidos); intervalPedidos = null; }
-}
-
 function inicializarEditorPedidos() {
   // Delegación sobre la lista de pedidos
   document.getElementById('lista-pedidos').addEventListener('click', e => {
@@ -905,6 +968,13 @@ function init() {
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();
+
+  // El AudioContext requiere interacción previa del usuario para poder reproducir sonido.
+  document.addEventListener('click', () => getAudioCtx(), { once: true });
+
+  // Polling global: detecta pedidos nuevos, suena y actualiza el badge desde cualquier vista.
+  pollPedidos();
+  setInterval(pollPedidos, 30_000);
 
   // Vista inicial: menú
   cargarMenu();
