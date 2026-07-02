@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS restaurants (
   slug       VARCHAR(100) NOT NULL UNIQUE,
   activo     BOOLEAN      NOT NULL DEFAULT true,
   plan_hasta TIMESTAMPTZ,
+  -- Métodos de pago estático: número de celular del restaurante en cada app
+  nequi      TEXT,
+  daviplata  TEXT,
   created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
@@ -71,7 +74,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   estado           TEXT    NOT NULL DEFAULT 'pendiente'
                    CHECK (estado IN ('pendiente','en_preparacion','listo','entregado')),
   metodo_pago      TEXT    NOT NULL DEFAULT 'efectivo'
-                   CHECK (metodo_pago IN ('efectivo','mp')),
+                   CHECK (metodo_pago IN ('efectivo','mp','nequi','daviplata')),
   mp_preference_id TEXT,
   mp_payment_id    TEXT,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()

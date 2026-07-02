@@ -678,6 +678,37 @@ body {
   color: #64748b;
 }
 
+/* Instrucciones de pago Nequi/Daviplata post-pedido */
+.pago-instrucciones {
+  margin-top: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: left;
+}
+
+.pago-instrucciones-titulo {
+  font-size: .85rem;
+  color: #475569;
+  margin-bottom: 10px !important;
+}
+
+.pago-numero {
+  font-size: 1.7rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  letter-spacing: .06em;
+  margin-bottom: 8px !important;
+  text-align: center;
+}
+
+.pago-instrucciones .hint {
+  font-size: .78rem;
+  color: #64748b;
+  text-align: center;
+}
+
 /* Selector método de pago */
 .carrito-pago {
   padding: 12px 0 4px;

@@ -4,6 +4,7 @@
     { "source": "/auth/:path*",       "destination": "https://comanda-g891.onrender.com/auth/:path*" },
     { "source": "/r/:path*",          "destination": "https://comanda-g891.onrender.com/r/:path*" },
     { "source": "/mi-restaurante",    "destination": "https://comanda-g891.onrender.com/mi-restaurante" },
+    { "source": "/cobros",            "destination": "https://comanda-g891.onrender.com/cobros" },
     { "source": "/menu",              "destination": "https://comanda-g891.onrender.com/menu" },
     { "source": "/categorias",        "destination": "https://comanda-g891.onrender.com/categorias" },
     { "source": "/categorias/:path*", "destination": "https://comanda-g891.onrender.com/categorias/:path*" },

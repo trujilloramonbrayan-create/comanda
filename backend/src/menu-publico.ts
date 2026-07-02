@@ -5,6 +5,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { query, queryOne } from './db.ts';
 import { responderJSON } from './utils.ts';
+import { config } from './config.ts';
 
 const REGEX_SLUG = /^[a-z0-9-]+$/;
 
@@ -12,6 +13,8 @@ interface RestauranteRow {
   id: number;
   nombre: string;
   slug: string;
+  nequi: string | null;
+  daviplata: string | null;
 }
 
 interface CatRow {
@@ -44,7 +47,7 @@ export async function menuPublico(
   }
 
   const restaurante = await queryOne<RestauranteRow>(
-    'SELECT id, nombre, slug FROM restaurants WHERE slug = $1 AND activo = true',
+    'SELECT id, nombre, slug, nequi, daviplata FROM restaurants WHERE slug = $1 AND activo = true',
     [slug]
   );
 
@@ -80,17 +83,13 @@ export async function menuPublico(
     }))
     .filter(cat => cat.platos.length > 0);
 
-  // Informar si el restaurante tiene MP configurado para mostrar u ocultar esa opción de pago
-  const tieneMP = await queryOne(
-    'SELECT 1 FROM mp_credentials WHERE restaurant_id = $1',
-    [restaurante.id]
-  );
-
   return responderJSON(res, 200, {
     restaurante: {
-      nombre:  restaurante.nombre,
-      slug:    restaurante.slug,
-      tiene_mp: !!tieneMP,
+      nombre:    restaurante.nombre,
+      slug:      restaurante.slug,
+      tiene_mp:  !!config.mpAccessToken,
+      nequi:     restaurante.nequi,
+      daviplata: restaurante.daviplata,
     },
     categorias: categoriasConPlatos,
   });

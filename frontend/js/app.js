@@ -841,6 +841,49 @@ function inicializarEditorPedidos() {
 
 
 // ─────────────────────────────────────────────────────────────
+// Vista Cobros — métodos de pago del restaurante
+// ─────────────────────────────────────────────────────────────
+
+async function cargarCobros() {
+  try {
+    const r = await llamarAPI('/mi-restaurante');
+    document.getElementById('cobros-nequi').value     = r.nequi     ?? '';
+    document.getElementById('cobros-daviplata').value = r.daviplata ?? '';
+  } catch { /* no crítico */ }
+}
+
+async function guardarCobros() {
+  const btn    = document.getElementById('btn-guardar-cobros');
+  const elOk   = document.getElementById('cobros-ok');
+  const elErr  = document.getElementById('cobros-error');
+  elOk.classList.add('oculto');
+  elErr.classList.add('oculto');
+  btn.disabled = true;
+
+  try {
+    await llamarAPI('/cobros', {
+      method: 'PUT',
+      body: JSON.stringify({
+        nequi:     document.getElementById('cobros-nequi').value.trim()     || null,
+        daviplata: document.getElementById('cobros-daviplata').value.trim() || null,
+      }),
+    });
+    elOk.classList.remove('oculto');
+    setTimeout(() => elOk.classList.add('oculto'), 3000);
+  } catch (err) {
+    elErr.textContent = err.message;
+    elErr.classList.remove('oculto');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function inicializarCobros() {
+  document.getElementById('btn-guardar-cobros').addEventListener('click', guardarCobros);
+  cargarCobros();
+}
+
+// ─────────────────────────────────────────────────────────────
 // Inicialización principal
 // ─────────────────────────────────────────────────────────────
 
@@ -858,6 +901,7 @@ function init() {
 
   inicializarEditorMenu();
   inicializarEditorPedidos();
+  inicializarCobros();
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();

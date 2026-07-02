@@ -6,7 +6,7 @@ import { despachar, registrar } from './router.ts';
 import { register, login } from './auth.ts';
 import { menuPublico } from './menu-publico.ts';
 import {
-  miRestaurante,
+  miRestaurante, actualizarCobros,
   obtenerMenu,
   crearCategoria, actualizarCategoria, eliminarCategoria,
   crearPlato,     actualizarPlato,     eliminarPlato,    patchDisponible,
@@ -35,6 +35,7 @@ registrar('POST',   '/mp/webhook',       webhookMP);
 
 // Panel del dueño — todos requieren JWT
 registrar('GET',    '/mi-restaurante',    miRestaurante);
+registrar('PUT',    '/cobros',            actualizarCobros);
 registrar('GET',    '/menu',              obtenerMenu);
 registrar('POST',   '/categorias',        crearCategoria);
 registrar('PUT',    '/categorias/:id',    actualizarCategoria);

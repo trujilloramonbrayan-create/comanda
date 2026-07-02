@@ -39,6 +39,11 @@
       <a href="#" class="nav-item" data-vista="qr">
         Mi QR
       </a>
+      <span class="nav-section">Configuración</span>
+      <a href="#" class="nav-item" data-vista="cobros">
+        Métodos de pago
+      </a>
+
       <span class="nav-section">Operación</span>
 
       <a href="#" class="nav-item" data-vista="pedidos">
@@ -102,6 +107,65 @@
       </div>
 
 <!-- ──────────────────────────────────
+           VISTA: Métodos de pago / Cobros
+      ─────────────────────────────────── -->
+      <div id="vista-cobros" class="oculto">
+        <div class="cobros-card">
+          <h2>Métodos de pago</h2>
+          <p>Configurá cómo pueden pagarte tus clientes. Solo aparecen las opciones que hayas activado.</p>
+
+          <div class="cobros-metodo">
+            <div class="cobros-metodo-head">
+              <span class="cobros-metodo-icono">💳</span>
+              <div>
+                <strong>Tarjeta / PSE / Nequi digital</strong>
+                <p class="hint">Procesado automáticamente por Mercado Pago · Sin configuración</p>
+              </div>
+              <span class="cobros-badge cobros-badge--activo">Activo</span>
+            </div>
+          </div>
+
+          <div class="cobros-metodo">
+            <div class="cobros-metodo-head">
+              <span class="cobros-metodo-icono">📱</span>
+              <div><strong>Nequi</strong></div>
+            </div>
+            <div class="campo">
+              <label for="cobros-nequi">Número de celular Nequi</label>
+              <input type="tel" id="cobros-nequi" placeholder="3001234567" maxlength="15" inputmode="numeric" />
+              <p class="hint">El cliente transferirá al número que pongas aquí.</p>
+            </div>
+          </div>
+
+          <div class="cobros-metodo">
+            <div class="cobros-metodo-head">
+              <span class="cobros-metodo-icono">📱</span>
+              <div><strong>Daviplata</strong></div>
+            </div>
+            <div class="campo">
+              <label for="cobros-daviplata">Número de celular Daviplata</label>
+              <input type="tel" id="cobros-daviplata" placeholder="3001234567" maxlength="15" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="cobros-metodo">
+            <div class="cobros-metodo-head">
+              <span class="cobros-metodo-icono">💵</span>
+              <div>
+                <strong>Efectivo</strong>
+                <p class="hint">Siempre disponible · El cliente paga al mesero</p>
+              </div>
+              <span class="cobros-badge cobros-badge--activo">Activo</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="btn-guardar-cobros">Guardar cambios</button>
+          <p class="cobros-ok oculto" id="cobros-ok">¡Guardado!</p>
+          <p class="cobros-error oculto" id="cobros-error"></p>
+        </div>
+      </div>
+
+      <!-- ──────────────────────────────────
            VISTA: Pedidos
       ─────────────────────────────────── -->
       <div id="vista-pedidos" class="oculto">

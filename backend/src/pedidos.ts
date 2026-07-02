@@ -74,7 +74,11 @@ export async function crearPedido(
     return;
   }
 
-  const metodoPago = body.metodo_pago === 'mp' ? 'mp' : 'efectivo';
+  const METODOS_VALIDOS = ['efectivo', 'mp', 'nequi', 'daviplata'] as const;
+  type MetodoPago = typeof METODOS_VALIDOS[number];
+  const metodoPago: MetodoPago = METODOS_VALIDOS.includes(body.metodo_pago as MetodoPago)
+    ? (body.metodo_pago as MetodoPago)
+    : 'efectivo';
 
   const pedido = await queryOne<{ id: number; estado: string; created_at: string }>(
     `INSERT INTO pedidos (restaurant_id, mesa_numero, metodo_pago)
@@ -94,9 +98,17 @@ export async function crearPedido(
     );
   }
 
-  // Pedido en efectivo → listo, flujo actual sin cambios
-  if (metodoPago === 'efectivo') {
-    responderJSON(res, 201, { ...pedido, metodo_pago: 'efectivo' });
+  // Pedido en efectivo, Nequi o Daviplata → devolver número de contacto si aplica
+  if (metodoPago !== 'mp') {
+    let numero: string | null = null;
+    if (metodoPago === 'nequi' || metodoPago === 'daviplata') {
+      const r = await queryOne<{ nequi: string | null; daviplata: string | null }>(
+        'SELECT nequi, daviplata FROM restaurants WHERE id = $1',
+        [restaurante.id]
+      );
+      numero = metodoPago === 'nequi' ? (r?.nequi ?? null) : (r?.daviplata ?? null);
+    }
+    responderJSON(res, 201, { ...pedido, metodo_pago: metodoPago, numero_pago: numero });
     return;
   }
 
@@ -153,8 +165,8 @@ export async function listarPedidos(
   } else if (estado === 'listo') {
     condicion = `AND p.estado = 'listo'`;
   }
-  // Excluir pedidos MP que aún no fueron pagados (sin mp_payment_id)
-  condicion += ` AND (p.metodo_pago = 'efectivo' OR p.mp_payment_id IS NOT NULL)`;
+  // Excluir pedidos MP sin confirmar; nequi/daviplata/efectivo entran directo (verificación manual)
+  condicion += ` AND (p.metodo_pago IN ('efectivo','nequi','daviplata') OR p.mp_payment_id IS NOT NULL)`;
 
   const pedidos = await query(
     `SELECT

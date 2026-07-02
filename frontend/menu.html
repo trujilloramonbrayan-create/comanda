@@ -106,17 +106,10 @@
         <strong id="carrito-total-drawer">$0</strong>
       </div>
 
-      <!-- Selector de método de pago — se muestra solo si el restaurante tiene MP -->
+      <!-- Selector de método de pago — generado por JS según config del restaurante -->
       <div class="carrito-pago oculto" id="carrito-pago">
         <p class="carrito-pago-lbl">¿Cómo querés pagar?</p>
-        <div class="carrito-pago-opciones">
-          <button class="carrito-pago-btn" data-metodo="mp" id="pago-btn-mp" type="button">
-            Mercado Pago
-          </button>
-          <button class="carrito-pago-btn activo" data-metodo="efectivo" id="pago-btn-efectivo" type="button">
-            Pagar en local
-          </button>
-        </div>
+        <div class="carrito-pago-opciones" id="carrito-pago-opciones"></div>
       </div>
 
       <button class="btn-confirmar-pedido" id="btn-confirmar-pedido" type="button">

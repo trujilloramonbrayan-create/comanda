@@ -132,10 +132,10 @@ let mesaActual = null;
 // Slug del restaurante — necesario para POST /r/:slug/pedidos
 let slugRestaurante = null;
 
-// Si el restaurante tiene MP configurado
-let tieneMP = false;
+// Métodos de pago disponibles en este restaurante
+let metodosDisponibles = { mp: false, nequi: null, daviplata: null };
 
-// Método elegido por el cliente: 'efectivo' | 'mp'
+// Método elegido por el cliente
 let metodoPago = 'efectivo';
 
 // Carrito: Map<platoId, { nombre, precio, cantidad }>
@@ -289,7 +289,7 @@ async function confirmarPedido() {
 
     const datos = await res.json();
 
-    // Si el restaurante eligió pagar con MP, redirigir al checkout
+    // Pago online con MP → redirigir al checkout
     if (datos.checkout_url) {
       carrito.clear();
       actualizarBarraCarrito();
@@ -297,11 +297,29 @@ async function confirmarPedido() {
       return;
     }
 
-    // Pago en local — mostrar confirmación
     const mesaConfirmada = mesaActual;
+    const total = totalCarrito();
     carrito.clear();
     actualizarBarraCarrito();
 
+    // Pago con Nequi o Daviplata → mostrar número para transferir
+    if (datos.numero_pago) {
+      const nombreMetodo = datos.metodo_pago === 'nequi' ? 'Nequi' : 'Daviplata';
+      document.getElementById('carrito-drawer').innerHTML = `
+        <div class="pedido-enviado">
+          <div class="pedido-enviado-check">✓</div>
+          <h3>¡Pedido recibido!</h3>
+          <p>Mesa ${mesaConfirmada}</p>
+          <div class="pago-instrucciones">
+            <p class="pago-instrucciones-titulo">Transferí ${formatearPrecio(total)} a este número por <strong>${nombreMetodo}</strong>:</p>
+            <p class="pago-numero">${datos.numero_pago}</p>
+            <p class="hint">Mostrá el comprobante al mesero para confirmar tu pedido.</p>
+          </div>
+        </div>`;
+      return;
+    }
+
+    // Pago en efectivo — confirmación simple
     document.getElementById('carrito-drawer').innerHTML = `
       <div class="pedido-enviado">
         <div class="pedido-enviado-check">✓</div>
@@ -339,15 +357,15 @@ function inicializarCarrito() {
     cambiarCantidad(platoId, btn.dataset.accion === 'mas' ? 1 : -1);
   });
 
-  // Selector de método de pago
+  // Selector de método de pago (delegación — los botones se generan en renderizarMenu)
   document.getElementById('carrito-pago').addEventListener('click', e => {
     const btn = e.target.closest('.carrito-pago-btn');
     if (!btn) return;
     metodoPago = btn.dataset.metodo;
     document.querySelectorAll('.carrito-pago-btn').forEach(b => b.classList.remove('activo'));
     btn.classList.add('activo');
-    document.getElementById('btn-confirmar-pedido').textContent =
-      metodoPago === 'mp' ? 'Pagar con Mercado Pago' : 'Confirmar pedido';
+    const labels = { mp: 'Pagar en línea', efectivo: 'Confirmar pedido', nequi: 'Pagar con Nequi', daviplata: 'Pagar con Daviplata' };
+    document.getElementById('btn-confirmar-pedido').textContent = labels[metodoPago] || 'Confirmar pedido';
   });
 
   // Delegación de eventos para botones en las tarjetas del menú
@@ -381,9 +399,52 @@ function inicializarCarrito() {
 function renderizarMenu(datos) {
   const { restaurante, categorias } = datos;
 
-  // Si el restaurante tiene MP, mostrar el selector de método de pago
-  tieneMP = !!restaurante.tiene_mp;
-  if (tieneMP) {
+  // Construir selector de método de pago dinámicamente
+  metodosDisponibles = {
+    mp:        !!restaurante.tiene_mp,
+    nequi:     restaurante.nequi     ?? null,
+    daviplata: restaurante.daviplata ?? null,
+  };
+
+  const hayMetodosExtra = metodosDisponibles.mp || metodosDisponibles.nequi || metodosDisponibles.daviplata;
+  if (hayMetodosExtra) {
+    const contenedor = document.getElementById('carrito-pago-opciones');
+
+    // Efectivo siempre va primero y arranca activo
+    const btnEfectivo = document.createElement('button');
+    btnEfectivo.className = 'carrito-pago-btn activo';
+    btnEfectivo.dataset.metodo = 'efectivo';
+    btnEfectivo.type = 'button';
+    btnEfectivo.textContent = 'Efectivo';
+    contenedor.appendChild(btnEfectivo);
+
+    if (metodosDisponibles.mp) {
+      const btn = document.createElement('button');
+      btn.className = 'carrito-pago-btn';
+      btn.dataset.metodo = 'mp';
+      btn.type = 'button';
+      btn.textContent = 'Tarjeta / PSE';
+      contenedor.appendChild(btn);
+    }
+
+    if (metodosDisponibles.nequi) {
+      const btn = document.createElement('button');
+      btn.className = 'carrito-pago-btn';
+      btn.dataset.metodo = 'nequi';
+      btn.type = 'button';
+      btn.textContent = 'Nequi';
+      contenedor.appendChild(btn);
+    }
+
+    if (metodosDisponibles.daviplata) {
+      const btn = document.createElement('button');
+      btn.className = 'carrito-pago-btn';
+      btn.dataset.metodo = 'daviplata';
+      btn.type = 'button';
+      btn.textContent = 'Daviplata';
+      contenedor.appendChild(btn);
+    }
+
     document.getElementById('carrito-pago').classList.remove('oculto');
   }
 

@@ -1198,7 +1198,54 @@ input, textarea { font-family: inherit; }
 }
 
 /* ============================================================
-   MERCADO PAGO — vista cobros
+   COBROS — métodos de pago del restaurante
+   ============================================================ */
+.cobros-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.cobros-card > h2 { margin: 0 0 6px; font-size: var(--text-xl); }
+.cobros-card > p  { color: var(--c-muted); margin: 0 0 24px; font-size: var(--text-sm); }
+
+.cobros-metodo {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.cobros-metodo .campo { margin-top: 12px; }
+
+.cobros-metodo-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cobros-metodo-head > div { flex: 1; }
+.cobros-metodo-head strong { font-size: var(--text-sm); }
+.cobros-metodo-head p.hint { margin: 2px 0 0; }
+
+.cobros-metodo-icono { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+
+.cobros-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+.cobros-badge--activo { background: #dcfce7; color: #15803d; }
+
+.cobros-ok    { color: #15803d; font-size: var(--text-sm); margin-top: 10px; }
+.cobros-error { color: var(--c-danger); font-size: var(--text-sm); margin-top: 10px; }
+
+/* ============================================================
+   MERCADO PAGO — vista cobros (legacy, conservar por si se usa)
    ============================================================ */
 .mp-card {
   background: var(--c-surface);

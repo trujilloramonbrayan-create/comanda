@@ -16,12 +16,37 @@ function esIdValido(id: string): boolean {
 
 export async function miRestaurante(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
-  const restaurante = await queryOne<{ id: number; nombre: string; slug: string; plan_hasta: Date | null }>(
-    'SELECT id, nombre, slug, plan_hasta FROM restaurants WHERE id = $1',
+  const restaurante = await queryOne<{ id: number; nombre: string; slug: string; plan_hasta: Date | null; nequi: string | null; daviplata: string | null }>(
+    'SELECT id, nombre, slug, plan_hasta, nequi, daviplata FROM restaurants WHERE id = $1',
     [restaurant_id]
   );
   if (!restaurante) return responderJSON(res, 404, { error: 'Restaurante no encontrado' });
   return responderJSON(res, 200, restaurante);
+}
+
+// ── PUT /cobros ───────────────────────────────────────────────────────────────
+// Guarda los números de Nequi y Daviplata del restaurante.
+
+export async function actualizarCobros(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const { restaurant_id } = verificarToken(req);
+  const body = await leerCuerpo(req) as { nequi?: unknown; daviplata?: unknown };
+
+  const limpiarNumero = (val: unknown): string | null => {
+    if (!val) return null;
+    const num = String(val).replace(/\D/g, '');
+    if (num.length < 7 || num.length > 15) return null;
+    return num;
+  };
+
+  const nequi     = limpiarNumero(body.nequi);
+  const daviplata = limpiarNumero(body.daviplata);
+
+  await query(
+    'UPDATE restaurants SET nequi = $1, daviplata = $2 WHERE id = $3',
+    [nequi, daviplata, restaurant_id]
+  );
+
+  responderJSON(res, 200, { ok: true, nequi, daviplata });
 }
 
 // ── GET /menu ─────────────────────────────────────────────────────────────────
