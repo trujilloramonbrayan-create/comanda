@@ -1,9 +1,8 @@
 // Módulo Mercado Pago.
-// OAuth para conectar la cuenta del dueño, webhook para confirmar pagos,
-// y helper para crear preferencias de pago desde pedidos.ts.
+// Cada restaurante conecta su cuenta pegando su Access Token de producción.
+// El token se valida contra la API de MP y se guarda en mp_credentials.
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import jwt from 'jsonwebtoken';
 import { config } from './config.ts';
 import { query, queryOne } from './db.ts';
 import { responderJSON, leerCuerpo } from './utils.ts';
@@ -11,94 +10,42 @@ import { verificarToken } from './auth.ts';
 
 const MP_API = 'https://api.mercadopago.com';
 
-// ── GET /auth/mp ──────────────────────────────────────────────────────────
-// Devuelve la URL de autorización de MP. El panel redirige al dueño ahí.
-// Requiere JWT del dueño para saber a qué restaurante vincular la cuenta.
+// ── PUT /mp/token ─────────────────────────────────────────────────────────
+// El dueño pega su Access Token de producción de MP.
+// Lo validamos consultando /users/me y guardamos las credenciales.
 
-export async function iniciarOAuthMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
+export async function guardarTokenMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  const { access_token } = await leerCuerpo(req) as { access_token?: string };
 
-  // state = JWT firmado con restaurant_id, válido 10 min (previene CSRF en el callback)
-  const state = jwt.sign({ restaurant_id }, config.jwtSecret, { expiresIn: '10m' });
-
-  const params = new URLSearchParams({
-    client_id:     config.mpClientId,
-    response_type: 'code',
-    platform_id:   'mp',
-    state,
-    redirect_uri:  `${config.appUrl}/auth/mp/callback`,
-  });
-
-  responderJSON(res, 200, { url: `https://auth.mercadopago.com/authorization?${params}` });
-}
-
-// ── GET /auth/mp/callback ─────────────────────────────────────────────────
-// MP redirige aquí después de que el dueño autoriza.
-// No lleva JWT (viene del navegador desde MP), el restaurant_id está en el state.
-
-export async function callbackOAuthMP(
-  req: IncomingMessage,
-  res: ServerResponse,
-): Promise<void> {
-  const url    = new URL(req.url ?? '/', 'http://localhost');
-  const code   = url.searchParams.get('code');
-  const state  = url.searchParams.get('state');
-
-  const redirigir = (ok: boolean) => {
-    res.writeHead(302, { Location: `${config.appUrl}/index.html?mp=${ok ? 'ok' : 'error'}` });
-    res.end();
-  };
-
-  if (!code || !state) return redirigir(false);
-
-  let payload: { restaurant_id: number };
-  try {
-    payload = jwt.verify(state, config.jwtSecret) as { restaurant_id: number };
-  } catch {
-    return redirigir(false);
+  if (!access_token || typeof access_token !== 'string' || !access_token.trim()) {
+    return responderJSON(res, 400, { error: 'access_token requerido' });
   }
 
-  // Intercambiar el code por los tokens de acceso
-  const tokenRes = await fetch(`${MP_API}/oauth/token`, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      client_id:     config.mpClientId,
-      client_secret: config.mpClientSecret,
-      code,
-      grant_type:   'authorization_code',
-      redirect_uri:  `${config.appUrl}/auth/mp/callback`,
-    }),
+  // Validar el token consultando la API de MP
+  const mpRes = await fetch(`${MP_API}/users/me`, {
+    headers: { Authorization: `Bearer ${access_token.trim()}` },
   });
 
-  if (!tokenRes.ok) return redirigir(false);
+  if (!mpRes.ok) {
+    return responderJSON(res, 400, { error: 'Token inválido o sin acceso a Mercado Pago' });
+  }
 
-  const datos = await tokenRes.json() as {
-    access_token:  string;
-    refresh_token: string;
-    user_id:       number;
-    expires_in:    number;
-  };
+  const usuario = await mpRes.json() as { id: number; email?: string };
 
-  const expiresAt = new Date(Date.now() + datos.expires_in * 1000);
-
-  // Guardar o actualizar credenciales
   await query(
-    `INSERT INTO mp_credentials (restaurant_id, access_token, refresh_token, mp_user_id, expires_at)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO mp_credentials (restaurant_id, access_token, mp_user_id)
+     VALUES ($1, $2, $3)
      ON CONFLICT (restaurant_id) DO UPDATE
-       SET access_token  = EXCLUDED.access_token,
-           refresh_token = EXCLUDED.refresh_token,
-           mp_user_id    = EXCLUDED.mp_user_id,
-           expires_at    = EXCLUDED.expires_at`,
-    [payload.restaurant_id, datos.access_token, datos.refresh_token, String(datos.user_id), expiresAt]
+       SET access_token = EXCLUDED.access_token,
+           mp_user_id   = EXCLUDED.mp_user_id`,
+    [restaurant_id, access_token.trim(), String(usuario.id)]
   );
 
-  redirigir(true);
+  responderJSON(res, 200, { ok: true, mp_user_id: String(usuario.id) });
 }
 
 // ── GET /mp/estado ────────────────────────────────────────────────────────
-// Informa si el restaurante del dueño logueado tiene MP conectado.
 
 export async function estadoMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
@@ -148,7 +95,6 @@ export async function webhookMP(
   );
   if (!creds) return;
 
-  // Verificar el pago consultando la API de MP con el token del restaurante
   const pagoRes = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
     headers: { Authorization: `Bearer ${creds.access_token}` },
   });
@@ -165,7 +111,6 @@ export async function webhookMP(
   const pedidoId = parseInt(pago.external_reference, 10);
   if (!pedidoId) return;
 
-  // Marcar el pedido como pagado (idempotente: solo actualiza si aún no tiene payment_id)
   await query(
     `UPDATE pedidos
      SET mp_payment_id = $1
@@ -175,7 +120,6 @@ export async function webhookMP(
 }
 
 // ── Helper: crear preferencia de pago ─────────────────────────────────────
-// Llamado desde pedidos.ts al crear un pedido con metodo_pago = 'mp'.
 
 export interface ItemMP {
   title:      string;
@@ -184,12 +128,12 @@ export interface ItemMP {
 }
 
 export async function crearPreferenciaMP(opts: {
-  accessToken:  string;
+  accessToken:      string;
   restaurantNombre: string;
-  restaurantId: number;
-  pedidoId:     number;
-  slug:         string;
-  items:        ItemMP[];
+  restaurantId:     number;
+  pedidoId:         number;
+  slug:             string;
+  items:            ItemMP[];
 }): Promise<{ preference_id: string; checkout_url: string }> {
   const body = {
     items: opts.items.map(i => ({ ...i, currency_id: 'COP' })),

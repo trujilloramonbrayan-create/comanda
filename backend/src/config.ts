@@ -20,7 +20,6 @@ export const config = {
   jwtSecret:          requerirEnv('JWT_SECRET'),
   supabaseUrl:        requerirEnv('SUPABASE_URL'),
   supabaseServiceKey: requerirEnv('SUPABASE_SERVICE_ROLE_KEY'),
-  mpClientId:         requerirEnv('MP_CLIENT_ID'),
-  mpClientSecret:     requerirEnv('MP_CLIENT_SECRET'),
-  appUrl:             requerirEnv('APP_URL'),
+  // APP_URL se usa para los back_urls del checkout y la URL del webhook de MP
+  appUrl:             process.env.APP_URL ?? 'https://clik.work',
 };

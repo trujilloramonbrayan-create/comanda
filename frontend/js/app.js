@@ -844,23 +844,9 @@ function inicializarEditorPedidos() {
 // ─────────────────────────────────────────────────────────────
 
 async function cargarEstadoMP() {
-  const elDesco   = document.getElementById('mp-estado-desconectado');
-  const elConec   = document.getElementById('mp-estado-conectado');
-  const elUserId  = document.getElementById('mp-user-id');
-  const elOk      = document.getElementById('mp-mensaje-ok');
-  const elError   = document.getElementById('mp-mensaje-error');
-
-  // Mostrar el toast si venimos del callback OAuth
-  const urlParams = new URLSearchParams(window.location.search);
-  const mp = urlParams.get('mp');
-  if (mp === 'ok') {
-    elOk.classList.remove('oculto');
-    // Limpiar el param de la URL sin recargar
-    window.history.replaceState({}, '', window.location.pathname);
-  } else if (mp === 'error') {
-    elError.classList.remove('oculto');
-    window.history.replaceState({}, '', window.location.pathname);
-  }
+  const elDesco  = document.getElementById('mp-estado-desconectado');
+  const elConec  = document.getElementById('mp-estado-conectado');
+  const elUserId = document.getElementById('mp-user-id');
 
   try {
     const data = await llamarAPI('/mp/estado');
@@ -873,16 +859,41 @@ async function cargarEstadoMP() {
       elDesco.classList.remove('oculto');
     }
   } catch {
-    // Si falla no mostramos nada crítico, el botón sigue disponible
+    // Si falla no mostramos nada crítico
   }
 }
 
 async function conectarMP() {
+  const input   = document.getElementById('mp-token-input');
+  const elError = document.getElementById('mp-mensaje-error');
+  const elOk    = document.getElementById('mp-mensaje-ok');
+  const btn     = document.getElementById('btn-mp-conectar');
+
+  const token = input.value.trim();
+  if (!token) {
+    elError.textContent = 'Pegá tu Access Token de Mercado Pago.';
+    elError.classList.remove('oculto');
+    return;
+  }
+
+  elError.classList.add('oculto');
+  btn.disabled = true;
+  btn.textContent = 'Conectando…';
+
   try {
-    const data = await llamarAPI('/auth/mp');
-    window.location.href = data.url;
+    await llamarAPI('/mp/token', {
+      method: 'PUT',
+      body: JSON.stringify({ access_token: token }),
+    });
+    input.value = '';
+    elOk.classList.remove('oculto');
+    await cargarEstadoMP();
   } catch (err) {
-    alert('No se pudo iniciar la conexión con Mercado Pago.');
+    elError.textContent = err.message || 'Token inválido. Verificá que sea el token de producción.';
+    elError.classList.remove('oculto');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar y conectar';
   }
 }
 
@@ -890,6 +901,7 @@ async function desconectarMPConfirmar() {
   if (!confirm('¿Desconectar la cuenta de Mercado Pago? Los pagos en línea quedarán deshabilitados.')) return;
   try {
     await llamarAPI('/mp/desconectar', { method: 'DELETE' });
+    document.getElementById('mp-mensaje-ok').classList.add('oculto');
     cargarEstadoMP();
   } catch (err) {
     alert('Error al desconectar: ' + err.message);
@@ -899,12 +911,6 @@ async function desconectarMPConfirmar() {
 function inicializarCobros() {
   document.getElementById('btn-mp-conectar').addEventListener('click', conectarMP);
   document.getElementById('btn-mp-desconectar').addEventListener('click', desconectarMPConfirmar);
-
-  // Si el panel se cargó luego del callback de OAuth, ir directo a la vista cobros
-  const mp = new URLSearchParams(window.location.search).get('mp');
-  if (mp === 'ok' || mp === 'error') {
-    cambiarVista('cobros');
-  }
 }
 
 // ─────────────────────────────────────────────────────────────

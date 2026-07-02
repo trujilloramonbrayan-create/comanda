@@ -123,9 +123,22 @@
             <!-- Estado: desconectado -->
             <div id="mp-estado-desconectado">
               <p class="mp-estado mp-estado--desconectado">No conectado</p>
+              <div class="campo">
+                <label for="mp-token-input">Tu Access Token de producción</label>
+                <input
+                  type="password"
+                  id="mp-token-input"
+                  placeholder="APP_USR-..."
+                  autocomplete="off"
+                />
+                <p class="hint">
+                  Entrá a <strong>mercadopago.com</strong> → Tu negocio → Credenciales → Producción → copiá el Access Token.
+                </p>
+              </div>
               <button class="btn btn-primary" id="btn-mp-conectar">
-                Conectar cuenta de Mercado Pago
+                Guardar y conectar
               </button>
+              <p id="mp-mensaje-error" class="mp-aviso mp-aviso--error oculto"></p>
             </div>
 
             <!-- Estado: conectado -->
@@ -138,10 +151,7 @@
             </div>
 
             <p id="mp-mensaje-ok" class="mp-aviso mp-aviso--ok oculto">
-              ¡Cuenta conectada con éxito! Tus clientes ya pueden pagar con Mercado Pago.
-            </p>
-            <p id="mp-mensaje-error" class="mp-aviso mp-aviso--error oculto">
-              Hubo un problema al conectar la cuenta. Intentá de nuevo.
+              ¡Cuenta conectada! Tus clientes ya pueden pagar con Mercado Pago.
             </p>
           </div>
         </div>
