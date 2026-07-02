@@ -14,7 +14,7 @@ import {
 } from './menu.ts';
 import { crearPedido, listarPedidos, avanzarEstadoPedido } from './pedidos.ts';
 import { obtenerGanancias } from './ganancias.ts';
-import { guardarTokenMP, estadoMP, desconectarMP, webhookMP } from './mp.ts';
+import { webhookMP } from './mp.ts';
 
 // Ruta de salud
 registrar('GET', '/health', (_req, res) => {
@@ -42,9 +42,6 @@ registrar('DELETE', '/categorias/:id',    eliminarCategoria);
 registrar('GET',    '/pedidos',           listarPedidos);
 registrar('PATCH',  '/pedidos/:id',       avanzarEstadoPedido);
 registrar('GET',    '/ganancias',         obtenerGanancias);
-registrar('PUT',    '/mp/token',          guardarTokenMP);
-registrar('GET',    '/mp/estado',         estadoMP);
-registrar('DELETE', '/mp/desconectar',    desconectarMP);
 
 registrar('POST',   '/platos',            crearPlato);
 registrar('POST',   '/platos/:id/imagen', subirImagenPlato);

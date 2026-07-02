@@ -1,74 +1,17 @@
 // Módulo Mercado Pago.
-// Cada restaurante conecta su cuenta pegando su Access Token de producción.
-// El token se valida contra la API de MP y se guarda en mp_credentials.
+// clik usa su propio token de producción para todos los pagos.
+// Los restaurantes no necesitan configurar nada de MP.
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { config } from './config.ts';
 import { query, queryOne } from './db.ts';
-import { responderJSON, leerCuerpo } from './utils.ts';
-import { verificarToken } from './auth.ts';
+import { leerCuerpo } from './utils.ts';
 
 const MP_API = 'https://api.mercadopago.com';
 
-// ── PUT /mp/token ─────────────────────────────────────────────────────────
-// El dueño pega su Access Token de producción de MP.
-// Lo validamos consultando /users/me y guardamos las credenciales.
-
-export async function guardarTokenMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const { restaurant_id } = verificarToken(req);
-  const { access_token } = await leerCuerpo(req) as { access_token?: string };
-
-  if (!access_token || typeof access_token !== 'string' || !access_token.trim()) {
-    return responderJSON(res, 400, { error: 'access_token requerido' });
-  }
-
-  // Validar el token consultando la API de MP
-  const mpRes = await fetch(`${MP_API}/users/me`, {
-    headers: { Authorization: `Bearer ${access_token.trim()}` },
-  });
-
-  if (!mpRes.ok) {
-    return responderJSON(res, 400, { error: 'Token inválido o sin acceso a Mercado Pago' });
-  }
-
-  const usuario = await mpRes.json() as { id: number; email?: string };
-
-  await query(
-    `INSERT INTO mp_credentials (restaurant_id, access_token, mp_user_id)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (restaurant_id) DO UPDATE
-       SET access_token = EXCLUDED.access_token,
-           mp_user_id   = EXCLUDED.mp_user_id`,
-    [restaurant_id, access_token.trim(), String(usuario.id)]
-  );
-
-  responderJSON(res, 200, { ok: true, mp_user_id: String(usuario.id) });
-}
-
-// ── GET /mp/estado ────────────────────────────────────────────────────────
-
-export async function estadoMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const { restaurant_id } = verificarToken(req);
-
-  const creds = await queryOne<{ mp_user_id: string }>(
-    'SELECT mp_user_id FROM mp_credentials WHERE restaurant_id = $1',
-    [restaurant_id]
-  );
-
-  responderJSON(res, 200, { conectado: !!creds, mp_user_id: creds?.mp_user_id ?? null });
-}
-
-// ── DELETE /mp/desconectar ────────────────────────────────────────────────
-
-export async function desconectarMP(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const { restaurant_id } = verificarToken(req);
-  await query('DELETE FROM mp_credentials WHERE restaurant_id = $1', [restaurant_id]);
-  responderJSON(res, 200, { ok: true });
-}
-
 // ── POST /mp/webhook ──────────────────────────────────────────────────────
 // MP notifica aquí cuando un pago cambia de estado.
-// Sin JWT. La URL incluye ?restaurant_id=N para saber qué restaurante verificar.
+// Sin JWT. La URL incluye ?restaurant_id=N para identificar el pedido.
 // Responde 200 de inmediato — MP exige respuesta rápida (< 500 ms).
 
 export async function webhookMP(
@@ -87,16 +30,12 @@ export async function webhookMP(
   const restaurantId = parseInt(urlParams.get('restaurant_id') ?? '', 10);
   if (!restaurantId) return;
 
+  if (!config.mpAccessToken) return;
+
   const paymentId = String(body.data.id);
 
-  const creds = await queryOne<{ access_token: string }>(
-    'SELECT access_token FROM mp_credentials WHERE restaurant_id = $1',
-    [restaurantId]
-  );
-  if (!creds) return;
-
   const pagoRes = await fetch(`${MP_API}/v1/payments/${paymentId}`, {
-    headers: { Authorization: `Bearer ${creds.access_token}` },
+    headers: { Authorization: `Bearer ${config.mpAccessToken}` },
   });
   if (!pagoRes.ok) return;
 
@@ -128,13 +67,16 @@ export interface ItemMP {
 }
 
 export async function crearPreferenciaMP(opts: {
-  accessToken:      string;
   restaurantNombre: string;
   restaurantId:     number;
   pedidoId:         number;
   slug:             string;
   items:            ItemMP[];
 }): Promise<{ preference_id: string; checkout_url: string }> {
+  if (!config.mpAccessToken) {
+    throw new Error('Pago con tarjeta no disponible por el momento');
+  }
+
   const body = {
     items: opts.items.map(i => ({ ...i, currency_id: 'COP' })),
     external_reference: String(opts.pedidoId),
@@ -151,7 +93,7 @@ export async function crearPreferenciaMP(opts: {
   const res = await fetch(`${MP_API}/checkout/preferences`, {
     method:  'POST',
     headers: {
-      Authorization:  `Bearer ${opts.accessToken}`,
+      Authorization:  `Bearer ${config.mpAccessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),

@@ -101,17 +101,6 @@ export async function crearPedido(
   }
 
   // Pedido con MP → crear preferencia de pago y devolver URL de checkout
-  const creds = await queryOne<{ access_token: string }>(
-    'SELECT access_token FROM mp_credentials WHERE restaurant_id = $1',
-    [restaurante.id]
-  );
-  if (!creds) {
-    // Si el restaurante no tiene MP configurado, cancelar el pedido y avisar
-    await query('DELETE FROM pedidos WHERE id = $1', [pedido!.id]);
-    responderJSON(res, 400, { error: 'Este restaurante no tiene Mercado Pago configurado' });
-    return;
-  }
-
   const rest = await queryOne<{ nombre: string; slug: string }>(
     'SELECT nombre, slug FROM restaurants WHERE id = $1',
     [restaurante.id]
@@ -124,7 +113,6 @@ export async function crearPedido(
     });
 
     const { preference_id, checkout_url } = await crearPreferenciaMP({
-      accessToken:      creds.access_token,
       restaurantNombre: rest!.nombre,
       restaurantId:     restaurante.id,
       pedidoId:         pedido!.id,

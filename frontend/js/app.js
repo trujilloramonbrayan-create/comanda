@@ -839,79 +839,6 @@ function inicializarEditorPedidos() {
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-// Vista Mercado Pago
-// ─────────────────────────────────────────────────────────────
-
-async function cargarEstadoMP() {
-  const elDesco  = document.getElementById('mp-estado-desconectado');
-  const elConec  = document.getElementById('mp-estado-conectado');
-  const elUserId = document.getElementById('mp-user-id');
-
-  try {
-    const data = await llamarAPI('/mp/estado');
-    if (data.conectado) {
-      elDesco.classList.add('oculto');
-      elConec.classList.remove('oculto');
-      elUserId.textContent = `ID de cuenta MP: ${data.mp_user_id}`;
-    } else {
-      elConec.classList.add('oculto');
-      elDesco.classList.remove('oculto');
-    }
-  } catch {
-    // Si falla no mostramos nada crítico
-  }
-}
-
-async function conectarMP() {
-  const input   = document.getElementById('mp-token-input');
-  const elError = document.getElementById('mp-mensaje-error');
-  const elOk    = document.getElementById('mp-mensaje-ok');
-  const btn     = document.getElementById('btn-mp-conectar');
-
-  const token = input.value.trim();
-  if (!token) {
-    elError.textContent = 'Pegá tu Access Token de Mercado Pago.';
-    elError.classList.remove('oculto');
-    return;
-  }
-
-  elError.classList.add('oculto');
-  btn.disabled = true;
-  btn.textContent = 'Conectando…';
-
-  try {
-    await llamarAPI('/mp/token', {
-      method: 'PUT',
-      body: JSON.stringify({ access_token: token }),
-    });
-    input.value = '';
-    elOk.classList.remove('oculto');
-    await cargarEstadoMP();
-  } catch (err) {
-    elError.textContent = err.message || 'Token inválido. Verificá que sea el token de producción.';
-    elError.classList.remove('oculto');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Guardar y conectar';
-  }
-}
-
-async function desconectarMPConfirmar() {
-  if (!confirm('¿Desconectar la cuenta de Mercado Pago? Los pagos en línea quedarán deshabilitados.')) return;
-  try {
-    await llamarAPI('/mp/desconectar', { method: 'DELETE' });
-    document.getElementById('mp-mensaje-ok').classList.add('oculto');
-    cargarEstadoMP();
-  } catch (err) {
-    alert('Error al desconectar: ' + err.message);
-  }
-}
-
-function inicializarCobros() {
-  document.getElementById('btn-mp-conectar').addEventListener('click', conectarMP);
-  document.getElementById('btn-mp-desconectar').addEventListener('click', desconectarMPConfirmar);
-}
 
 // ─────────────────────────────────────────────────────────────
 // Inicialización principal
@@ -931,7 +858,6 @@ function init() {
 
   inicializarEditorMenu();
   inicializarEditorPedidos();
-  inicializarCobros();
 
   // Cargar nombre del restaurante en el sidebar (paralelo, no bloquea)
   cargarNombreRestaurante();

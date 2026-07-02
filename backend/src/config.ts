@@ -22,4 +22,6 @@ export const config = {
   supabaseServiceKey: requerirEnv('SUPABASE_SERVICE_ROLE_KEY'),
   // APP_URL se usa para los back_urls del checkout y la URL del webhook de MP
   appUrl:             process.env.APP_URL ?? 'https://clik.work',
+  // Token de producción de MP de clik — procesa todos los pagos del SaaS
+  mpAccessToken:      process.env.MP_ACCESS_TOKEN ?? '',
 };
