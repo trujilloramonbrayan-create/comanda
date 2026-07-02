@@ -5,12 +5,12 @@
     { "source": "/r/:path*",          "destination": "https://comanda-g891.onrender.com/r/:path*" },
     { "source": "/mi-restaurante",    "destination": "https://comanda-g891.onrender.com/mi-restaurante" },
     { "source": "/menu",              "destination": "https://comanda-g891.onrender.com/menu" },
-    { "source": "/categorias/:path*", "destination": "https://comanda-g891.onrender.com/categorias/:path*" },
     { "source": "/categorias",        "destination": "https://comanda-g891.onrender.com/categorias" },
-    { "source": "/platos/:path*",     "destination": "https://comanda-g891.onrender.com/platos/:path*" },
+    { "source": "/categorias/:path*", "destination": "https://comanda-g891.onrender.com/categorias/:path*" },
     { "source": "/platos",            "destination": "https://comanda-g891.onrender.com/platos" },
-    { "source": "/pedidos/:path*",    "destination": "https://comanda-g891.onrender.com/pedidos/:path*" },
+    { "source": "/platos/:path*",     "destination": "https://comanda-g891.onrender.com/platos/:path*" },
     { "source": "/pedidos",           "destination": "https://comanda-g891.onrender.com/pedidos" },
+    { "source": "/pedidos/:path*",    "destination": "https://comanda-g891.onrender.com/pedidos/:path*" },
     { "source": "/ganancias",         "destination": "https://comanda-g891.onrender.com/ganancias" },
     { "source": "/mp/:path*",         "destination": "https://comanda-g891.onrender.com/mp/:path*" }
   ]
