@@ -76,6 +76,7 @@ function crearNodoPlato(plato) {
   const article = document.createElement('article');
   article.className = 'plato';
 
+  // Foto grande arriba — gradiente determinista si no hay imagen real
   const foto = document.createElement('div');
   foto.className = 'plato-foto';
   if (plato.imagen_url) {
@@ -87,16 +88,14 @@ function crearNodoPlato(plato) {
   }
   article.appendChild(foto);
 
+  // Texto debajo de la foto
   const info = document.createElement('div');
   info.className = 'plato-info';
 
-  const cabecera = document.createElement('div');
-  cabecera.className = 'plato-cabecera';
   const nombre = document.createElement('h3');
   nombre.className = 'plato-nombre';
   nombre.textContent = plato.nombre;
-  cabecera.appendChild(nombre);
-  info.appendChild(cabecera);
+  info.appendChild(nombre);
 
   if (plato.descripcion) {
     const desc = document.createElement('p');
@@ -105,23 +104,23 @@ function crearNodoPlato(plato) {
     info.appendChild(desc);
   }
 
+  // Fila inferior: precio izquierda · botón + derecha
   const pie = document.createElement('div');
   pie.className = 'plato-pie';
+
   const precio = document.createElement('span');
   precio.className = 'plato-precio';
   precio.textContent = formatearPrecio(plato.precio);
-  // Guardamos el número en data-precio para leerlo al agregar al carrito
   precio.dataset.precio = String(plato.precio);
   pie.appendChild(precio);
-  info.appendChild(pie);
 
-  // Control de cantidad (inicialmente muestra "Agregar")
   const ctrl = document.createElement('div');
   ctrl.className = 'plato-ctrl';
   ctrl.id = `ctrl-plato-${plato.id}`;
-  ctrl.innerHTML = `<button class="btn-agregar" data-plato-id="${plato.id}">Agregar</button>`;
-  info.appendChild(ctrl);
+  ctrl.innerHTML = `<button class="btn-agregar" data-plato-id="${plato.id}">+</button>`;
+  pie.appendChild(ctrl);
 
+  info.appendChild(pie);
   article.appendChild(info);
   return article;
 }
@@ -216,7 +215,7 @@ function actualizarControlPlato(platoId) {
   if (!ctrl) return;
   const item = carrito.get(platoId);
   if (!item || item.cantidad === 0) {
-    ctrl.innerHTML = `<button class="btn-agregar" data-plato-id="${platoId}">Agregar</button>`;
+    ctrl.innerHTML = `<button class="btn-agregar" data-plato-id="${platoId}">+</button>`;
   } else {
     ctrl.innerHTML = `
       <div class="qty-ctrl-plato">
@@ -480,7 +479,10 @@ function renderizarMenu(datos) {
     titulo.textContent = cat.nombre;
     seccion.appendChild(titulo);
 
-    cat.platos.forEach(plato => seccion.appendChild(crearNodoPlato(plato)));
+    const grid = document.createElement('div');
+    grid.className = 'categoria-grid';
+    cat.platos.forEach(plato => grid.appendChild(crearNodoPlato(plato)));
+    seccion.appendChild(grid);
 
     menuBody.appendChild(seccion);
   });

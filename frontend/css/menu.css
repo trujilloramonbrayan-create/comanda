@@ -201,7 +201,7 @@ body {
    SECCIÓN DE CATEGORÍA
    ============================================================ */
 .menu-body {
-  padding: 0 var(--px) 60px;
+  padding: 0 var(--px) 100px;
 }
 
 .categoria {
@@ -216,89 +216,91 @@ body {
   letter-spacing: -.02em;
   padding-bottom: 14px;
   border-bottom: 1px solid var(--c-border);
-  margin-bottom: 4px;
+  margin-bottom: 14px;
+}
+
+/* Grid de 2 columnas para las tarjetas */
+.categoria-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 /* ============================================================
-   TARJETA DE PLATO
+   TARJETA DE PLATO — diseño vertical con foto grande
    ============================================================ */
 .plato {
-  display: flex;
-  gap: 14px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--c-border);
-  align-items: flex-start;
-}
-
-.plato:last-child { border-bottom: none; }
-
-/* foto — cuadrado a la derecha en mobile */
-.plato-foto {
-  flex-shrink: 0;
-  width: 88px;
-  height: 88px;
-  border-radius: var(--r);
+  background: var(--c-surface);
+  border-radius: 16px;
   overflow: hidden;
-  order: 2;   /* foto va a la derecha */
-}
-
-/* info — texto a la izquierda */
-.plato-info {
-  flex: 1;
-  min-width: 0;
-  order: 1;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.04);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  transition: transform .12s;
+  cursor: pointer;
 }
 
-.plato-cabecera {
+.plato:active { transform: scale(.97); }
+
+/* Foto grande — ocupa todo el ancho de la tarjeta */
+.plato-foto {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Contenido de texto */
+.plato-info {
+  flex: 1;
+  padding: 10px 11px 12px;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .plato-nombre {
-  font-size: .95rem;
+  font-size: .87rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
   color: var(--c-text);
-  flex: 1;
-  min-width: 0;
-}
-
-.plato-desc {
-  font-size: .8rem;
-  color: var(--c-muted);
-  line-height: 1.45;
-  /* máximo 2 líneas en el layout mobile */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+.plato-desc {
+  font-size: .73rem;
+  color: var(--c-muted);
+  line-height: 1.4;
+  margin-top: 4px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Fila inferior: precio a la izquierda, botón a la derecha */
 .plato-pie {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
+  margin-top: 10px;
+  gap: 6px;
 }
 
 .plato-precio {
-  font-size: .95rem;
-  font-weight: 700;
+  font-size: .9rem;
+  font-weight: 800;
   color: var(--c-text);
   letter-spacing: -.02em;
+  white-space: nowrap;
 }
 
-.plato-tags {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  margin-top: 5px;
-}
+/* Ctrl de cantidad — no necesita margen propio, vive dentro de .plato-pie */
+.plato-ctrl { flex-shrink: 0; }
 
 /* ── Estado agotado ── */
 .plato-agotado .plato-foto   { opacity: .4; }
@@ -342,29 +344,41 @@ body {
 /* ============================================================
    BOTÓN AGREGAR + CONTROLES DE CANTIDAD — en cada tarjeta de plato
    ============================================================ */
-.plato-ctrl { margin-top: 8px; }
 
+/* Círculo dorado con + */
 .btn-agregar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background: var(--c-accent);
   color: #1a0f0a;
   border: none;
-  border-radius: 99px;
-  padding: 6px 18px;
-  font-size: .78rem;
-  font-weight: 700;
+  font-size: 1.55rem;
+  font-weight: 300;
+  line-height: 1;
   cursor: pointer;
-  transition: opacity .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform .12s, box-shadow .12s;
+  box-shadow: 0 3px 10px rgba(201,168,76,.45);
 }
-.btn-agregar:active { opacity: .7; }
 
+.btn-agregar:active {
+  transform: scale(.88);
+  box-shadow: 0 1px 4px rgba(201,168,76,.3);
+}
+
+/* Controles − N + cuando ya hay unidades */
 .qty-ctrl-plato {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   background: rgba(201,168,76,.12);
-  border: 1px solid rgba(201,168,76,.3);
+  border: 1.5px solid rgba(201,168,76,.35);
   border-radius: 99px;
-  padding: 4px 10px;
+  padding: 3px 8px;
 }
 
 .btn-qty-plato {
@@ -374,16 +388,20 @@ body {
   font-weight: 700;
   cursor: pointer;
   color: var(--c-accent-dark);
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .qty-plato-num {
-  font-weight: 700;
-  font-size: .9rem;
-  min-width: 18px;
+  font-weight: 800;
+  font-size: .85rem;
+  min-width: 14px;
   text-align: center;
+  color: var(--c-text);
 }
 
 /* ============================================================
