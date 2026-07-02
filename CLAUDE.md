@@ -26,7 +26,7 @@ El operador de clik **no** da de alta clientes a mano, no carga menús, no gener
 Flujo de adquisición:
 1. Restaurante llega por Google o link directo → `clik.work`
 2. Hace clic en "Probar gratis" → `register.html`
-3. Completa el registro en 2 minutos → queda con 30 días de prueba activos
+3. Completa el registro en 2 minutos → queda con 30 días de prueba activos automáticamente
 4. Sube su menú, descarga el QR, lo imprime, empieza a recibir pedidos
 
 ---
@@ -39,15 +39,15 @@ Página de marketing. Explica el producto, el precio y el diferencial vs. delive
 ### 2. Panel del dueño — `index.html`
 Lo accede el restaurante tras el login. Vistas disponibles:
 - **Menú**: editor de categorías y platos (nombre, descripción, precio, imagen, disponibilidad)
-- **Pedidos**: lista en tiempo real con estados (pendiente → en preparación → listo → entregado), filtros por estado
-- **Ganancias**: resumen del período
-- **QR**: código QR del restaurante listo para descargar e imprimir
-- **Métodos de pago**: configuración de números Nequi y Daviplata; estado de Mercado Pago y efectivo
+- **Mi QR**: código QR del restaurante listo para descargar e imprimir
+- **Métodos de pago**: configura números de Nequi y Daviplata; muestra estado de MP y efectivo
+- **Pedidos**: lista en tiempo real con estados (pendiente → en preparación → listo → entregado), filtros por estado, alerta sonora al llegar pedidos nuevos, badge rojo en el nav
+- **Ganancias**: resumen del período (hoy, mes, desglose por día)
 
-Multitenant: cada dueño ve y edita solo sus propios datos.
+Multitenant: cada dueño ve y edita solo sus propios datos. El `restaurant_id` viene siempre del JWT, nunca del cliente.
 
 ### 3. Menú público — `menu.html`
-Lo que ve el cliente final al escanear el QR en la mesa. URL: `clik.work/menu.html?slug={slug}` (pendiente migrar a `/r/{slug}`). Sin login. Muestra categorías y platos del restaurante, carrito de compras y métodos de pago disponibles.
+Lo que ve el cliente final al escanear el QR en la mesa. URL actual: `clik.work/menu.html?slug={slug}`. Sin login. Muestra categorías, platos con imagen, carrito de compras y métodos de pago disponibles para ese restaurante.
 
 ---
 
@@ -57,18 +57,18 @@ Lo que ve el cliente final al escanear el QR en la mesa. URL: `clik.work/menu.ht
 |---|---|---|
 | Frontend (estáticos) | Vercel | `clik.work` |
 | Backend (API) | Render | `comanda-g891.onrender.com` |
-| Base de datos | Supabase (PostgreSQL) | pool pg directo |
+| Base de datos | Supabase (PostgreSQL) | pool pg directo con `pg` |
 | Imágenes de platos | Supabase Storage | bucket público `platos` |
 
-**Vercel actúa como proxy:** rewrites en `frontend/vercel.json` redirigen las rutas de API hacia Render. El frontend nunca llama directo a Render en producción — todo pasa por `clik.work`.
+**Vercel actúa como proxy:** los rewrites en `frontend/vercel.json` redirigen rutas de API hacia Render. El frontend nunca llama directo a Render en producción — todo pasa por `clik.work`. El orden de los rewrites importa: rutas exactas antes que wildcards (`/pedidos` antes de `/pedidos/:path*`).
 
-Variables de entorno en Render:
+Variables de entorno en Render (todas requeridas salvo MP_ACCESS_TOKEN):
 - `DATABASE_URL` — cadena de conexión Supabase
 - `JWT_SECRET` — secreto para firmar tokens
 - `SUPABASE_URL` — URL del proyecto Supabase
 - `SUPABASE_SERVICE_ROLE_KEY` — clave de servicio para Supabase Storage
 - `APP_URL` — `https://clik.work`
-- `MP_ACCESS_TOKEN` — token de Mercado Pago de clik (pendiente configurar)
+- `MP_ACCESS_TOKEN` — token de Mercado Pago de clik (**pendiente configurar en Render** — sin esto los pagos con tarjeta no funcionan)
 
 ---
 
@@ -88,7 +88,7 @@ Variables de entorno en Render:
 - Sin React, Vue, ni ningún framework de UI
 - Sin bundler ni paso de build — archivos estáticos servidos directamente por Vercel
 - Sin librerías externas (Bootstrap, Tailwind, jQuery, etc.)
-- Patrón `esLocal`: detecta si corre en localhost para apuntar la API a Render o a `localhost:3000`
+- Patrón `esLocal`: detecta si corre en localhost para apuntar la API a `localhost:3000` o usar URL relativa
 
 ---
 
@@ -106,17 +106,35 @@ npm run dev            # node --watch --experimental-strip-types src/server.ts
 ## Esquema de base de datos
 
 ```
-restaurants   — un registro por restaurante; campos: nombre, slug, activo, plan_hasta, nequi, daviplata
-owners        — credenciales de acceso del dueño (1:1 con restaurants)
-categorias    — secciones del menú (Entradas, Pastas…), ordenadas por `orden`
-platos        — platos del menú; FK a categoria + restaurant; imagen en Supabase Storage
-mesas         — mesas del restaurante (tabla existente, aún no integrada al flujo de pedidos)
-pedidos       — pedidos creados desde el menú público; estado: pendiente→en_preparacion→listo→entregado
-pedido_items  — ítems de cada pedido (snapshot de nombre y precio al momento del pedido)
-mp_credentials — credenciales OAuth MP por restaurante (tabla existente, integración pendiente de activar)
+restaurants    — un registro por restaurante
+               campos: nombre, slug, activo, plan_hasta, nequi, daviplata
+               plan_hasta: TIMESTAMPTZ — si < NOW() el plan está vencido
+
+owners         — credenciales del dueño (1:1 con restaurants)
+               campos: restaurant_id, email, password_hash, rol ('owner' | 'superadmin')
+
+categorias     — secciones del menú (Entradas, Pastas…), ordenadas por `orden`
+
+platos         — platos del menú
+               FK doble: categoria_id + restaurant_id
+               imagen_url apunta a Supabase Storage (bucket público "platos")
+               precio en pesos colombianos enteros
+
+mesas          — tabla existente, aún no integrada al flujo de pedidos
+
+pedidos        — pedidos creados desde el menú público
+               estado: pendiente → en_preparacion → listo → entregado (avance en un solo sentido)
+               metodo_pago: 'efectivo' | 'mp' | 'nequi' | 'daviplata'
+               mp_preference_id: ID de preferencia MP (solo pedidos MP)
+               mp_payment_id: ID del pago confirmado por webhook (solo pedidos MP pagados)
+               Los pedidos de nequi/daviplata/efectivo aparecen siempre; los de MP solo si mp_payment_id != null
+
+pedido_items   — snapshot de nombre y precio al momento del pedido (nunca mutan con el menú)
+
+mp_credentials — tabla existente para OAuth MP por restaurante (no usada actualmente)
 ```
 
-**Patrón multitenant:** toda tabla de negocio lleva `restaurant_id INTEGER NOT NULL REFERENCES restaurants(id)`. Todas las queries deben filtrar por `restaurant_id` para aislar datos entre tenants.
+**Patrón multitenant:** toda tabla de negocio lleva `restaurant_id INTEGER NOT NULL REFERENCES restaurants(id)`. Todas las queries deben filtrar por `restaurant_id` para aislar datos entre tenants. El `restaurant_id` viene siempre del JWT, **nunca del body del request**.
 
 ---
 
@@ -126,29 +144,80 @@ mp_credentials — credenciales OAuth MP por restaurante (tabla existente, integ
 | Método | Ruta | Descripción |
 |---|---|---|
 | GET | `/health` | Estado del servidor |
-| POST | `/auth/register` | Registro de nuevo restaurante + dueño (crea 30 días de prueba) |
+| POST | `/auth/register` | Registro de nuevo restaurante + dueño. Crea `plan_hasta = NOW() + 30 days` automáticamente. Devuelve JWT. |
 | POST | `/auth/login` | Login; devuelve JWT |
-| GET | `/r/:slug` | Menú público del restaurante (categorías, platos, métodos de pago disponibles) |
-| POST | `/r/:slug/pedidos` | Cliente crea un pedido |
-| POST | `/mp/webhook` | Webhook de Mercado Pago (confirma pagos) |
+| GET | `/r/:slug` | Menú público. Devuelve restaurante (con `plan_vencido`), categorías y platos disponibles. |
+| POST | `/r/:slug/pedidos` | Cliente crea un pedido. Retorna 402 si el plan del restaurante venció. |
+| POST | `/mp/webhook` | Webhook de Mercado Pago (confirma pagos con tarjeta) |
 
 ### Protegidos — requieren `Authorization: Bearer <token>`
+Todos llaman `verificarPlan(restaurant_id)` después de `verificarToken()`. Si el plan venció, responden 402 y el frontend muestra el overlay de renovación.
+
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/mi-restaurante` | Datos del restaurante del dueño autenticado |
-| PUT | `/cobros` | Actualizar números de Nequi y Daviplata |
-| GET | `/menu` | Menú completo del restaurante (para el editor) |
+| GET | `/mi-restaurante` | Datos del restaurante. **No** bloquea por plan vencido — devuelve `plan_vencido: true` para que el frontend muestre el overlay. |
+| PUT | `/cobros` | Guarda números de Nequi y Daviplata |
+| GET | `/menu` | Menú completo con platos anidados por categoría (para el editor) |
 | POST | `/categorias` | Crear categoría |
 | PUT | `/categorias/:id` | Editar categoría |
 | DELETE | `/categorias/:id` | Eliminar categoría |
 | POST | `/platos` | Crear plato |
-| POST | `/platos/:id/imagen` | Subir imagen del plato a Supabase Storage |
+| POST | `/platos/:id/imagen` | Subir imagen a Supabase Storage (raw binary, límite 5 MB) |
 | PUT | `/platos/:id` | Editar plato |
 | PATCH | `/platos/:id` | Cambiar disponibilidad del plato |
 | DELETE | `/platos/:id` | Eliminar plato |
-| GET | `/pedidos` | Listar pedidos del restaurante (filtros: `?estado=activos`, `?estado=listo`) |
+| GET | `/pedidos` | Listar pedidos (`?estado=activos` o `?estado=listo`). Excluye pedidos MP sin confirmar. |
 | PATCH | `/pedidos/:id` | Avanzar estado del pedido |
-| GET | `/ganancias` | Resumen de ganancias del período |
+| GET | `/ganancias` | Totales de hoy, del mes y desglose día a día (solo pedidos 'entregado') |
+
+---
+
+## Enforcement del plan (implementado)
+
+**Backend — `auth.ts`:**
+```typescript
+export async function verificarPlan(restaurantId: number): Promise<void>
+// Lanza error { status: 402 } si plan_hasta < NOW() o activo = false.
+// Se llama en todos los handlers protegidos excepto /mi-restaurante.
+```
+
+**Frontend — `app.js`:**
+- `llamarAPI()` captura respuestas 402 → llama `mostrarPlanVencido()`
+- `cargarNombreRestaurante()` detecta `plan_vencido: true` en `/mi-restaurante` → llama `mostrarPlanVencido()`
+- `mostrarPlanVencido()` muestra un overlay de pantalla completa con precio, CTA de renovación y opción de cerrar sesión
+
+**Renovación manual (actual):** Cuando el restaurante pague, ejecutar en Supabase:
+```sql
+UPDATE restaurants SET plan_hasta = NOW() + INTERVAL '30 days' WHERE id = <id>;
+```
+El billing automático es trabajo futuro.
+
+**Menú público:** si `plan_vencido`, el GET del menú devuelve los datos pero con `plan_vencido: true` y `tiene_mp: false`. El frontend muestra "Pedidos no disponibles". El POST de pedidos retorna 402. El restaurante siente el impacto en su operación → incentivo para renovar.
+
+---
+
+## Alertas sonoras de pedidos (implementado)
+
+**`app.js` — polling global:**
+- `pollPedidos()` corre cada 30s desde `init()`, independientemente de la vista activa
+- Compara IDs de pedidos activos con `idsConocidosPedidos` (Set)
+- Si hay IDs nuevos → `sonarAlerta()` (doble pitido a 880 Hz con Web Audio API)
+- Badge rojo en el nav con el conteo de pedidos `pendiente` cuando el dueño no está en la vista de pedidos
+- Al entrar a la vista de pedidos → badge se limpia
+- El `AudioContext` se inicializa en el primer click del usuario (requerido por política de autoplay del navegador)
+
+---
+
+## Flujo de pago
+
+El menú público muestra solo los métodos activos para ese restaurante:
+
+- **Efectivo**: siempre disponible; el cliente paga al mesero al recibir el pedido
+- **Nequi**: visible si el restaurante configuró su número en Métodos de pago; el cliente transfiere y muestra el comprobante
+- **Daviplata**: igual que Nequi
+- **Mercado Pago** (tarjeta/PSE): visible si `MP_ACCESS_TOKEN` está configurado en Render; redirige al checkout de MP; el webhook confirma el pago
+
+Si el plan venció: MP se oculta aunque el token esté configurado, y el POST de pedidos retorna 402.
 
 ---
 
@@ -158,20 +227,20 @@ mp_credentials — credenciales OAuth MP por restaurante (tabla existente, integ
 clik/
   backend/
     src/
-      config.ts         — carga y valida variables de entorno
+      config.ts         — carga y valida variables de entorno; falla al arrancar si falta algo requerido
       db.ts             — pool pg + helpers query<T>, queryOne<T>, transaccion()
-      router.ts         — router manual: registrar() y despachar()
-      server.ts         — punto de entrada: registra todas las rutas, crea el servidor HTTP
-      utils.ts          — helpers HTTP: responderJSON(), leerCuerpo()
-      auth.ts           — POST /auth/register y /auth/login + verificarToken()
-      menu.ts           — CRUD de menú (categorías, platos, imágenes) + PUT /cobros
-      menu-publico.ts   — GET /r/:slug (menú público sin auth)
+      router.ts         — router manual: registrar() y despachar(); soporta params /:slug
+      server.ts         — punto de entrada: registra rutas, maneja errores globales (401/402/403/413/500)
+      utils.ts          — helpers HTTP: responderJSON(), leerCuerpo(), leerCuerpoRaw()
+      auth.ts           — register, login, verificarToken(), verificarPlan()
+      menu.ts           — CRUD de menú (categorías, platos, imágenes) + PUT /cobros + GET /mi-restaurante
+      menu-publico.ts   — GET /r/:slug — devuelve menú + plan_vencido + métodos de pago disponibles
       pedidos.ts        — POST /r/:slug/pedidos, GET /pedidos, PATCH /pedidos/:id
       ganancias.ts      — GET /ganancias
       mp.ts             — crearPreferenciaMP() + webhookMP (POST /mp/webhook)
     db/
       schema.sql             — DDL completo de todas las tablas
-      migration_cobros.sql   — migración: columns nequi, daviplata en restaurants; metodo_pago en pedidos
+      migration_cobros.sql   — migración aplicada: nequi/daviplata en restaurants; metodo_pago en pedidos
     .node-version            — 22.6.0 (type stripping requiere ≥ 22.6)
     .env.example
     package.json
@@ -179,52 +248,35 @@ clik/
     landing.html        — landing pública de marketing
     register.html       — registro de nuevos restaurantes
     login.html          — login de dueños
-    index.html          — panel del dueño (menú, pedidos, ganancias, QR, cobros)
+    index.html          — panel del dueño; incluye overlay #overlay-plan-vencido
     menu.html           — menú público para clientes finales
     css/
       landing.css       — estilos de landing.html
-      styles.css        — design tokens (:root) + estilos del panel del dueño
-      menu.css          — estilos del menú público y carrito
+      styles.css        — design tokens (:root) + estilos del panel, badge pedidos, overlay plan vencido
+      menu.css          — estilos del menú público, carrito y pantalla de transferencia Nequi/Daviplata
     js/
-      app.js            — lógica del panel del dueño (auth, menú, pedidos, QR, cobros)
-      menu.js           — lógica del menú público (carrito, pedido, pago)
-    vercel.json         — rewrites de Vercel hacia Render; orden exacto importa (rutas exactas antes de wildcards)
+      app.js            — panel del dueño: auth, menú, pedidos, QR, cobros, pollPedidos, plan vencido
+      menu.js           — menú público: carrito, pedido, métodos de pago, plan_vencido
+    vercel.json         — rewrites hacia Render; orden crítico: exactas antes que wildcards
 ```
 
 ---
 
-## Flujo de pago
+## Lo que falta (próximas prioridades)
 
-El menú público muestra solo los métodos activos para ese restaurante:
+### Pendiente urgente
+1. **`MP_ACCESS_TOKEN` en Render** — una sola variable de entorno separa al producto de recibir pagos con tarjeta. Sin esto solo funcionan efectivo, Nequi y Daviplata. Hay que ir al dashboard de Render → Environment → agregar la variable con el token de producción de MP de clik.
 
-- **Efectivo**: siempre disponible; el cliente paga al mesero al recibir el pedido
-- **Nequi**: visible si el restaurante configuró su número; el cliente hace la transferencia y muestra el comprobante
-- **Daviplata**: igual que Nequi
-- **Mercado Pago** (tarjeta/PSE/PSE): visible si `MP_ACCESS_TOKEN` está configurado en Render; redirige al checkout de MP y confirma vía webhook
+2. **Cobro automático de la suscripción** — hoy la renovación del plan es 100% manual (SQL directo en Supabase). Para escalar a 200 restaurantes se necesita al menos un link de pago de MP que, al ser pagado, extienda automáticamente `plan_hasta`. Sin esto el operador hace trabajo manual por cada cliente.
 
-Los pedidos de Nequi y Daviplata aparecen en el panel del dueño con estado `pendiente` — la verificación del pago es manual (el mesero pide el comprobante). Los pedidos de MP solo aparecen una vez que el webhook de MP confirma el pago (`mp_payment_id` queda guardado).
+### Mejoras de experiencia (siguiente ronda)
+3. **URL limpia del menú** — el QR apunta a `clik.work/menu.html?slug=X`. La URL ideal es `clik.work/r/X`. Requiere un rewrite en Vercel que sirva `menu.html` cuando el path es `/r/:slug`, en lugar de proxear al backend.
 
----
+4. **Panel optimizado para móvil** — los dueños de restaurante suelen gestionar desde el celular, especialmente la vista de pedidos. El panel actual está pensado para desktop.
 
-## Lo que falta construir (prioridad de julio 2026 en adelante)
+5. **Notificación al cliente del estado del pedido** — después de hacer el pedido, el cliente no sabe si está siendo preparado. Podría verse el estado en tiempo real en la pantalla post-pedido.
 
-### Bloqueante inmediato
-1. **Alerta sonora en el panel de pedidos** — cuando llega un pedido nuevo, el panel debe emitir un sonido y mostrar una notificación visual prominente. Sin esto, un restaurante ocupado pierde pedidos. El panel ya hace polling; falta agregar el `Audio` y la lógica de diff.
-
-2. **Enforcement del plan** — `plan_hasta` existe en la BD pero nunca se verifica. Un restaurante puede usar clik gratis indefinidamente. Hay que bloquear el acceso al panel y al menú público cuando el plan esté vencido, y mostrar una pantalla de renovación.
-
-3. **`MP_ACCESS_TOKEN` en Render** — la variable está en el código pero no en las variables de entorno de Render. Sin esto los clientes del restaurante no pueden pagar con tarjeta. Es una sola variable de entorno.
-
-### Siguiente etapa (escala)
-4. **Cobro automático de la suscripción** — clik necesita cobrar los $50.000/mes automáticamente (link de pago, débito recurrente, o similar). Hoy no existe ningún mecanismo de cobro.
-
-5. **Notificación al cliente del estado del pedido** — el cliente no sabe si su pedido está siendo preparado. Un refresh de la vista de post-pedido o un flujo de seguimiento mejoraría la experiencia.
-
-6. **URL limpia del menú** — el QR lleva a `clik.work/menu.html?slug=X`. La URL correcta sería `clik.work/r/X`. Requiere que Vercel sirva `menu.html` cuando llega a `/r/:slug` en vez de proxy al backend.
-
-7. **Panel optimizado para móvil** — los dueños de restaurante suelen usar el celular. El panel actual no está diseñado pensando en pantallas pequeñas.
-
-8. **Integración de mesas** — la tabla `mesas` existe en la BD pero no está integrada. El cliente escribe libremente su número de mesa. Validar contra las mesas configuradas mejoraría la experiencia.
+6. **Integración de mesas** — la tabla `mesas` existe en la BD pero no está conectada al flujo. El cliente escribe libremente su número de mesa sin validación.
 
 ---
 
@@ -237,14 +289,16 @@ Los pedidos de Nequi y Daviplata aparecen en el panel del dueño con estado `pen
 - Comentarios solo cuando el "por qué" no es obvio
 - Nombres de dominio en español; términos técnicos en inglés
 - Errores de validación de entorno se lanzan al arrancar, no en runtime
-- Validar siempre `restaurant_id` del JWT antes de cualquier operación de escritura
+- `restaurant_id` siempre del JWT, nunca del body — validar antes de cualquier escritura
+- Secuencia estándar en handlers protegidos: `verificarToken` → `verificarPlan` → lógica de negocio
 
 ### Frontend
-- Clases CSS en español cuando describen dominio (`.campo`, `.oculto`, `.activo`, `.cobros-card`)
+- Clases CSS en español cuando describen dominio (`.campo`, `.oculto`, `.activo`)
 - CSS variables para todos los valores visuales: colores, tipografía, espaciado
 - JS sin `var`, sin jQuery, sin librerías externas
 - Patrón `esLocal` para detectar entorno y apuntar la URL de API correcta
 - Funciones pequeñas y con nombre descriptivo
+- `llamarAPI()` centraliza fetch + JWT + manejo de 401 (→ login) y 402 (→ overlay plan vencido)
 
 ### Git
 - Commits atómicos en español
