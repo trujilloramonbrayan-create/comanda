@@ -408,22 +408,28 @@ body {
   justify-content: space-between;
   width: 100%;
   max-width: var(--col);
-  background: #1a0f0a;
-  color: #fff;
+  background: linear-gradient(135deg, #c9a84c 0%, #e8c86a 50%, #a8873a 100%);
+  color: #1a0f0a;
   border: none;
   border-radius: 16px;
   padding: 16px 20px;
   font-size: .95rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   pointer-events: all;
-  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  box-shadow: 0 8px 32px rgba(201,168,76,.45), 0 2px 8px rgba(0,0,0,.2);
   gap: 12px;
+  transition: transform .15s, box-shadow .15s;
+}
+
+.carrito-bar-btn:active {
+  transform: scale(.97);
+  box-shadow: 0 4px 16px rgba(201,168,76,.35);
 }
 
 .carrito-cant-badge {
-  background: var(--c-accent);
-  color: #1a0f0a;
+  background: #1a0f0a;
+  color: #fff;
   border-radius: 99px;
   padding: 3px 10px;
   font-size: .78rem;

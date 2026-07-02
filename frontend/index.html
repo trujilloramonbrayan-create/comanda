@@ -46,6 +46,9 @@
 
       <span class="nav-section">Operación</span>
 
+      <a href="#" class="nav-item" data-vista="pedidos">
+        Pedidos
+      </a>
       <a href="#" class="nav-item" data-vista="ganancias">
         Ganancias
       </a>
@@ -142,6 +145,19 @@
             </p>
           </div>
         </div>
+      </div>
+
+      <!-- ──────────────────────────────────
+           VISTA: Pedidos
+      ─────────────────────────────────── -->
+      <div id="vista-pedidos" class="oculto">
+        <div class="pedidos-filtros">
+          <button class="btn btn-ghost filtro-btn activo" data-filtro="activos">Activos</button>
+          <button class="btn btn-ghost filtro-btn" data-filtro="listo">Listos</button>
+          <button class="btn btn-ghost filtro-btn" data-filtro="todos">Todos</button>
+          <button class="btn btn-secondary" id="btn-refrescar-pedidos">↺ Actualizar</button>
+        </div>
+        <div id="lista-pedidos"></div>
       </div>
 
       <!-- ──────────────────────────────────
