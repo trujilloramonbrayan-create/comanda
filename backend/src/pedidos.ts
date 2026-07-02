@@ -74,11 +74,8 @@ export async function crearPedido(
     return;
   }
 
-  const METODOS_VALIDOS = ['efectivo', 'mp', 'nequi', 'daviplata'] as const;
-  type MetodoPago = typeof METODOS_VALIDOS[number];
-  const metodoPago: MetodoPago = METODOS_VALIDOS.includes(body.metodo_pago as MetodoPago)
-    ? (body.metodo_pago as MetodoPago)
-    : 'efectivo';
+  const metodoRaw = String(body.metodo_pago ?? 'efectivo');
+  const metodoPago = ['efectivo', 'mp', 'nequi', 'daviplata'].includes(metodoRaw) ? metodoRaw : 'efectivo';
 
   const pedido = await queryOne<{ id: number; estado: string; created_at: string }>(
     `INSERT INTO pedidos (restaurant_id, mesa_numero, metodo_pago)
