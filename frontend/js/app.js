@@ -149,7 +149,7 @@ function cambiarVista(nombre) {
 
   if (nombre === 'menu')      cargarMenu();
   if (nombre === 'qr')        cargarQR();
-  if (nombre === 'cobros')    cargarEstadoMP();
+  if (nombre === 'cobros')    cargarCobros();
   if (nombre === 'ganancias') cargarGanancias();
   if (nombre === 'pedidos')   { cargarPedidos(); iniciarAutoRefreshPedidos(); }
   if (nombre !== 'pedidos')   detenerAutoRefreshPedidos();
