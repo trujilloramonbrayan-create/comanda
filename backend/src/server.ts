@@ -77,7 +77,7 @@ const servidor = http.createServer(async (req, res) => {
       // Errores con { status } (ej. 401 de verificarToken) usan ese código.
       // El resto son errores inesperados → 500.
       const status = (error as { status?: number }).status;
-      if (status === 401 || status === 403 || status === 413) {
+      if (status === 401 || status === 402 || status === 403 || status === 413) {
         res.writeHead(status, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: (error as Error).message }));
       } else {

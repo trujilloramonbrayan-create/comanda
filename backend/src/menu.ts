@@ -4,7 +4,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { query, queryOne } from './db.ts';
 import { leerCuerpo, leerCuerpoRaw, responderJSON } from './utils.ts';
-import { verificarToken } from './auth.ts';
+import { verificarToken, verificarPlan } from './auth.ts';
 import { config } from './config.ts';
 
 function esIdValido(id: string): boolean {
@@ -21,7 +21,9 @@ export async function miRestaurante(req: IncomingMessage, res: ServerResponse): 
     [restaurant_id]
   );
   if (!restaurante) return responderJSON(res, 404, { error: 'Restaurante no encontrado' });
-  return responderJSON(res, 200, restaurante);
+  // plan_vencido lo calcula el cliente para mostrar la pantalla de renovación
+  const plan_vencido = !!(restaurante.plan_hasta && new Date(restaurante.plan_hasta) < new Date());
+  return responderJSON(res, 200, { ...restaurante, plan_vencido });
 }
 
 // ── PUT /cobros ───────────────────────────────────────────────────────────────
@@ -29,6 +31,7 @@ export async function miRestaurante(req: IncomingMessage, res: ServerResponse): 
 
 export async function actualizarCobros(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   const body = await leerCuerpo(req) as { nequi?: unknown; daviplata?: unknown };
 
   const limpiarNumero = (val: unknown): string | null => {
@@ -54,6 +57,7 @@ export async function actualizarCobros(req: IncomingMessage, res: ServerResponse
 
 export async function obtenerMenu(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   interface CatRow { id: number; nombre: string; orden: number }
   interface PlatoRow { id: number; categoria_id: number; nombre: string; descripcion: string | null; precio: number; disponible: boolean; orden: number; imagen_url: string | null }
@@ -79,6 +83,7 @@ export async function obtenerMenu(req: IncomingMessage, res: ServerResponse): Pr
 
 export async function crearCategoria(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   let body: { nombre?: unknown };
   try { body = await leerCuerpo(req); } catch {
@@ -109,6 +114,7 @@ export async function actualizarCategoria(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   // Ownership: la categoría debe pertenecer al restaurante del token
@@ -137,6 +143,7 @@ export async function eliminarCategoria(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   const existente = await queryOne('SELECT id FROM categorias WHERE id = $1 AND restaurant_id = $2', [params.id, restaurant_id]);
@@ -150,6 +157,7 @@ export async function eliminarCategoria(
 
 export async function crearPlato(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   let body: { nombre?: unknown; descripcion?: unknown; precio?: unknown; disponible?: unknown; categoria_id?: unknown };
   try { body = await leerCuerpo(req); } catch {
@@ -192,6 +200,7 @@ export async function actualizarPlato(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   interface PlatoActual { nombre: string; descripcion: string | null; precio: number; disponible: boolean }
@@ -230,6 +239,7 @@ export async function patchDisponible(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   const existente = await queryOne<{ disponible: boolean }>(
@@ -256,6 +266,7 @@ export async function eliminarPlato(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   const existente = await queryOne('SELECT id FROM platos WHERE id = $1 AND restaurant_id = $2', [params.id, restaurant_id]);
@@ -280,6 +291,7 @@ export async function subirImagenPlato(
   req: IncomingMessage, res: ServerResponse, params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
   if (!esIdValido(params.id)) return responderJSON(res, 400, { error: 'ID inválido' });
 
   // Ownership check: el plato debe pertenecer al restaurante del token

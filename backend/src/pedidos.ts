@@ -6,7 +6,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { query, queryOne } from './db.ts';
 import { responderJSON, leerCuerpo } from './utils.ts';
-import { verificarToken } from './auth.ts';
+import { verificarToken, verificarPlan } from './auth.ts';
 import { crearPreferenciaMP } from './mp.ts';
 
 // ── Tipos internos ────────────────────────────────────────────────────────────
@@ -29,12 +29,16 @@ export async function crearPedido(
   res: ServerResponse,
   params: Record<string, string>
 ): Promise<void> {
-  const restaurante = await queryOne<{ id: number }>(
-    `SELECT id FROM restaurants WHERE slug = $1 AND activo = true`,
+  const restaurante = await queryOne<{ id: number; plan_hasta: Date | null }>(
+    `SELECT id, plan_hasta FROM restaurants WHERE slug = $1 AND activo = true`,
     [params.slug]
   );
   if (!restaurante) {
     responderJSON(res, 404, { error: 'Restaurante no encontrado' });
+    return;
+  }
+  if (restaurante.plan_hasta && new Date(restaurante.plan_hasta) < new Date()) {
+    responderJSON(res, 402, { error: 'Este restaurante no está recibiendo pedidos en línea por el momento' });
     return;
   }
 
@@ -150,6 +154,7 @@ export async function listarPedidos(
   res: ServerResponse
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   const urlParams = new URL(req.url!, 'http://localhost').searchParams;
   const estado    = urlParams.get('estado');
@@ -202,6 +207,7 @@ export async function avanzarEstadoPedido(
   params: Record<string, string>
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   const pedido = await queryOne<{ id: number; estado: string }>(
     `SELECT id, estado FROM pedidos WHERE id = $1 AND restaurant_id = $2`,

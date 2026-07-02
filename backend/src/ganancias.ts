@@ -4,13 +4,14 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { queryOne, query } from './db.ts';
 import { responderJSON } from './utils.ts';
-import { verificarToken } from './auth.ts';
+import { verificarToken, verificarPlan } from './auth.ts';
 
 export async function obtenerGanancias(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
   const { restaurant_id } = verificarToken(req);
+  await verificarPlan(restaurant_id);
 
   // Totales de hoy
   const hoy = await queryOne<{ total: string; pedidos: string }>(

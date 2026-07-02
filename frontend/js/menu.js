@@ -582,6 +582,14 @@ async function cargarMenu() {
       return;
     }
 
+    if (datos.restaurante?.plan_vencido) {
+      mostrarMensaje(
+        'Pedidos no disponibles',
+        'Este restaurante no está recibiendo pedidos en línea por el momento. Consultá al personal.'
+      );
+      return;
+    }
+
     if (!datos.categorias || datos.categorias.length === 0) {
       mostrarMensaje(
         'Este restaurante todavía no cargó su menú',

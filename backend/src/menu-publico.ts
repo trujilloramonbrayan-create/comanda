@@ -15,6 +15,7 @@ interface RestauranteRow {
   slug: string;
   nequi: string | null;
   daviplata: string | null;
+  plan_hasta: Date | null;
 }
 
 interface CatRow {
@@ -47,7 +48,7 @@ export async function menuPublico(
   }
 
   const restaurante = await queryOne<RestauranteRow>(
-    'SELECT id, nombre, slug, nequi, daviplata FROM restaurants WHERE slug = $1 AND activo = true',
+    'SELECT id, nombre, slug, nequi, daviplata, plan_hasta FROM restaurants WHERE slug = $1 AND activo = true',
     [slug]
   );
 
@@ -83,13 +84,16 @@ export async function menuPublico(
     }))
     .filter(cat => cat.platos.length > 0);
 
+  const plan_vencido = !!(restaurante.plan_hasta && new Date(restaurante.plan_hasta) < new Date());
+
   return responderJSON(res, 200, {
     restaurante: {
-      nombre:    restaurante.nombre,
-      slug:      restaurante.slug,
-      tiene_mp:  !!config.mpAccessToken,
-      nequi:     restaurante.nequi,
-      daviplata: restaurante.daviplata,
+      nombre:       restaurante.nombre,
+      slug:         restaurante.slug,
+      tiene_mp:     !!config.mpAccessToken && !plan_vencido,
+      nequi:        restaurante.nequi,
+      daviplata:    restaurante.daviplata,
+      plan_vencido,
     },
     categorias: categoriasConPlatos,
   });

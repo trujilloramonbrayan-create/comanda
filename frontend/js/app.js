@@ -35,11 +35,14 @@ async function llamarAPI(ruta, opciones = {}) {
   });
 
   if (!res.ok) {
-    // Token vencido o inválido → redirigir al login
     if (res.status === 401) {
       localStorage.removeItem('clik_token');
       localStorage.removeItem('clik_restaurant');
       window.location.replace('login.html');
+      return;
+    }
+    if (res.status === 402) {
+      mostrarPlanVencido();
       return;
     }
     const cuerpo = await res.json().catch(() => ({}));
@@ -48,6 +51,20 @@ async function llamarAPI(ruta, opciones = {}) {
 
   return res.status === 204 ? null : res.json();
 }
+
+// ─────────────────────────────────────────────────────────────
+// Plan vencido
+// ─────────────────────────────────────────────────────────────
+
+function mostrarPlanVencido() {
+  document.getElementById('overlay-plan-vencido').classList.remove('oculto');
+}
+
+document.getElementById('btn-cerrar-sesion-plan').addEventListener('click', () => {
+  localStorage.removeItem('clik_token');
+  localStorage.removeItem('clik_restaurant');
+  window.location.replace('login.html');
+});
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
@@ -186,6 +203,8 @@ async function cargarQR() {
 async function cargarNombreRestaurante() {
   try {
     const r = await llamarAPI('/mi-restaurante');
+    if (!r) return; // 401 ya redirigió a login, 402 ya mostró overlay
+    if (r.plan_vencido) { mostrarPlanVencido(); return; }
     const el = document.getElementById('sidebar-restaurante-nombre');
     const plan = formatearPlan(r.plan_hasta);
     el.innerHTML = `

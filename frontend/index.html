@@ -299,6 +299,30 @@
 </div>
 
 
+<!-- ═══════════════════════════════════════
+     OVERLAY — Plan vencido
+     Cubre toda la pantalla cuando el plan expiró.
+     JS lo muestra con: document.getElementById('overlay-plan-vencido').classList.remove('oculto')
+══════════════════════════════════════════ -->
+<div class="overlay-plan-vencido oculto" id="overlay-plan-vencido">
+  <div class="plan-vencido-card">
+    <div class="plan-vencido-icono">&#9200;</div>
+    <h2 class="plan-vencido-titulo">Tu plan venció</h2>
+    <p class="plan-vencido-desc">
+      Tu período de prueba o suscripción terminó. Renovalo para seguir recibiendo pedidos
+      y administrar tu menú.
+    </p>
+    <p class="plan-vencido-precio"><strong>$50.000 COP / mes</strong></p>
+    <a
+      href="mailto:hola@clik.work?subject=Renovar%20plan%20clik"
+      class="btn btn-primary plan-vencido-btn"
+    >
+      Renovar plan
+    </a>
+    <button class="btn btn-ghost" id="btn-cerrar-sesion-plan">Cerrar sesión</button>
+  </div>
+</div>
+
 <script src="js/app.js"></script>
 </body>
 </html>

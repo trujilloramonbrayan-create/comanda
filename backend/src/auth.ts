@@ -165,6 +165,23 @@ export async function login(req: IncomingMessage, res: ServerResponse): Promise<
   });
 }
 
+// ── verificarPlan ──────────────────────────────────────────────
+// Verifica que el plan del restaurante esté vigente.
+// Lanza error 402 si venció o el restaurante está desactivado.
+
+export async function verificarPlan(restaurantId: number): Promise<void> {
+  const r = await queryOne<{ activo: boolean; plan_hasta: Date | null }>(
+    'SELECT activo, plan_hasta FROM restaurants WHERE id = $1',
+    [restaurantId]
+  );
+  if (!r || !r.activo) {
+    throw Object.assign(new Error('Restaurante desactivado'), { status: 402 });
+  }
+  if (r.plan_hasta && new Date(r.plan_hasta) < new Date()) {
+    throw Object.assign(new Error('Plan vencido'), { status: 402 });
+  }
+}
+
 // ── verificarToken ─────────────────────────────────────────────
 // Valida el JWT del header Authorization: Bearer <token>.
 // Lanza un error con { status: 401 } si falta o es inválido;

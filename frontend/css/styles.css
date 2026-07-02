@@ -390,6 +390,65 @@ input, textarea { font-family: inherit; }
 }
 
 /* ============================================================
+   OVERLAY — PLAN VENCIDO
+   Cubre toda la pantalla y bloquea la interacción con el panel.
+   ============================================================ */
+.overlay-plan-vencido {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15,23,42,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.plan-vencido-card {
+  background: var(--c-surface);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.plan-vencido-icono {
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.plan-vencido-titulo {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--c-text);
+  margin: 0 0 12px;
+}
+
+.plan-vencido-desc {
+  color: var(--c-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.plan-vencido-precio {
+  font-size: var(--text-lg);
+  color: var(--c-text);
+  margin: 0 0 28px;
+}
+
+.plan-vencido-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  text-decoration: none;
+  text-align: center;
+}
+
+/* ============================================================
    MODAL
    ============================================================ */
 .modal-overlay {
